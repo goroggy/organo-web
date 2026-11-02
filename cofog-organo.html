@@ -113,7 +113,7 @@
   <header class="topbar">
     <a class="brand" href="cofog-organo.html"><img src="logo.svg" alt="" width="30" height="30" style="vertical-align:middle;margin-right:10px">ORGANO</a>
     <div class="scope">Feladat és szervezet</div>
-    <div class="scope" id="pubstamp" title="A kiadás időpontja (a kiadó szkript írja be)" style="font-size:.78rem;opacity:.8">Kiadva: 2026-11-02 19:05</div>
+    <div class="scope" id="pubstamp" title="A kiadás időpontja (a kiadó szkript írja be)" style="font-size:.78rem;opacity:.8">Kiadva: 2026-11-02 21:11</div>
     <nav class="topnav">
       <a href="#" id="navHome">Kezdőlap</a>
       <a href="szmsz-transfer-overview.html" id="navChart">Átadások ábrája</a>
@@ -235,9 +235,9 @@
     const SC = window.SZMSZ_COFOG;
     const unitsByCode = new Map();
     if (SC) for (const [code, list] of Object.entries(SC.byCode))
-      unitsByCode.set(code, list.map(([u, disputed, ntasks]) => {
+      unitsByCode.set(code, list.map(([u, disputed, ntasks, status]) => {
         const [doc, number, name] = SC.units[u], [org, title, from, until] = SC.docs[doc];
-        return { unit: u, doc, org, title, from, until, number, name, disputed: !!disputed, tasks: ntasks };
+        return { unit: u, doc, org, title, from, until, number, name, disputed: !!disputed, status, tasks: ntasks };
       }));
     for (const n of cofog.byCode.values()) {
       n.directRows = byCode.get(n.code) ?? [];
@@ -512,7 +512,7 @@
         const rs = g.rs.sort((a, b) => a.from.localeCompare(b.from)), last = rs[rs.length - 1];
         const years = rs.map(r => `${r.from.slice(0, 4)}–${r.until ? r.until.slice(0, 4) : ''}`).join(', ');
         const tasks = rs.reduce((s, r) => s + r.tasks, 0);
-        return `<tr><td><b>${esc(D.orgs[g.org] || g.org)}</b><div class="sub-holder">${hl(g.name)}${rs.some(r => r.disputed) ? ' <span class="flag">vitatott besorolás</span>' : ''}</div></td>` +
+        return `<tr><td><b>${esc(D.orgs[g.org] || g.org)}</b><div class="sub-holder">${hl(g.name)}${rs.some(r => r.disputed) ? ' <span class="flag">vitatott besorolás</span>' : ''}${rs.some(r => r.status === 'egy szavazat') ? ' <span class="flag">egy szavazat</span>' : ''}</div></td>` +
           `<td>${esc(years)}</td><td style="white-space:nowrap"><a href="#" data-szmsz-unit="${last.unit}">${tasks} feladat →</a></td></tr>`;
       }).join('');
       const nTasks = rows.reduce((s, r) => s + r.tasks, 0);

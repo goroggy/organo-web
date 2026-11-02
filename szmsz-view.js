@@ -6,7 +6,7 @@ window.SzmszView = (() => {
   const fold = s => String(s ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
   const MIN_QUERY = 3, MAX_GROUPS = 250, MAX_THREADS = 200;
   const LABEL = /^\s*(?:\(?\d{1,3}(?:\.\d{1,3})*[a-z]?[.)]|\(?[a-z]{1,3}\)|[-–•])\s+/;
-  const STATUS = ['egyetértés', 'egyetértés (definíciókkal)', 'vitatott'];
+  const STATUS = ['egyetértés', 'egyetértés (definíciókkal)', 'vitatott', 'egy szavazat'];
   // scripts/szmsz_poc_build.py MECHANISMS, in that order
   const MECH = [['kiválás', 'az átvevő első SZMSZ-e, az átadó működik tovább'], ['portfólió-áthelyezés', 'mindkét szervezet működik tovább'],
     ['beolvadás', 'az átadó megszűnik, az átvevő már működött'], ['megszűnés új szervbe', 'az átadó megszűnik, az átvevő új'],
@@ -278,11 +278,17 @@ window.SzmszView = (() => {
       `<h2 class="sec"><span>Feladatok${list.length > MAX_GROUPS ? ` (az első ${MAX_GROUPS} a ${list.length}-ből)` : ''}</span></h2>` +
       `<table class="det"><tr><th>Évek</th><th>Szervezet / egység</th><th>Feladat</th></tr>${items}</table>`;
   }
+  function identityNotes(ds) {
+    const noted = ds.filter(d => D.dnotes && D.dnotes[d.i]);
+    if (!noted.length) return '';
+    return `<div class="note"><b>Azonosság bizonytalan:</b><ul>${noted.map(d =>
+      `<li><b>${esc(d.title)}</b>: ${esc(D.dnotes[d.i])}</li>`).join('')}</ul></div>`;
+  }
   function showOrg(org) {
     const ds = docsOf(org);
     const { axis, seg } = timeline(ds.map(d => ({ org, from: d.from, until: d.until })));
     $('right').innerHTML = `<div class="crumbs">Szervezet</div><h1>${esc(orgName(org))}</h1>` +
-      `<div class="crumbs">${ds.length} SZMSZ a HLex-ben · ${ds.reduce((s, d) => s + d.taskCount, 0)} feladat-előfordulás · az utolsó SZMSZ hatálya „máig”, amíg a HLex nem ismer újabbat</div>` +
+      `<div class="crumbs">${ds.length} SZMSZ a HLex-ben · ${ds.reduce((s, d) => s + d.taskCount, 0)} feladat-előfordulás · az utolsó SZMSZ hatálya „máig”, amíg a HLex nem ismer újabbat</div>` + identityNotes(ds) +
       `${axis}<div class="org"><div class="osum"><div class="name">SZMSZ-ek</div><div class="bar">${ds.map((d, k) => seg({ from: d.from, until: d.until, label: `${d.title} · ${period(d)}` }, k)).join('')}</div></div></div>` +
       `<table class="det"><tr><th>SZMSZ</th><th>SZMSZ-időszak</th><th>Kibocsátó</th><th>Egység</th><th>Feladat</th></tr>` +
       ds.map(d => `<tr><td><a href="#" data-szmsz="${d.id}">${esc(d.title)}</a></td><td style="white-space:nowrap">${esc(period(d))}</td><td>${esc(d.issuer)}</td><td>${d.units.length}</td><td>${d.taskCount}</td></tr>`).join('') + '</table>';
@@ -290,6 +296,7 @@ window.SzmszView = (() => {
   function showDoc(d) {
     $('right').innerHTML = `<div class="crumbs">${esc(orgName(d.org))}</div><h1>${esc(d.title)}</h1>` +
       `<div class="crumbs">SZMSZ-időszak (a kiadáskori szöveg, módosítások nélkül): ${esc(period(d))} · kibocsátó: ${esc(d.issuer)} · HLex: ${esc(d.njt)}</div>` +
+      identityNotes([d]) +
       `<h2 class="sec"><span>Szervezeti egységek (${d.units.length}) és feladataik (${d.taskCount})</span></h2>` +
       `<table class="det"><tr><th>Szám</th><th>Egység</th><th>Feladat (alatta lévőkkel)</th></tr>` +
       d.units.map(u => `<tr><td>${esc(u.number)}</td><td style="padding-left:${14 + 14 * (unitPath(u).length - 1)}px"><a href="#" data-szmsz="${u.id}">${esc(u.name)}</a></td><td>${u.total}</td></tr>`).join('') + '</table>';
@@ -305,6 +312,8 @@ window.SzmszView = (() => {
     const own = u.tasks;
     $('right').innerHTML = `<div class="crumbs">${esc(orgName(d.org))} › <a href="#" data-szmsz="${d.id}">${esc(d.title)}</a> (${esc(period(d))})${path.slice(0, -1).map(p => ` › <a href="#" data-szmsz="${p.id}">${esc(p.name)}</a>`).join('')}</div>` +
       `<h1>${esc(u.number)} ${esc(u.name)}</h1>` +
+      identityNotes([d]) +
+      (u.code ? `<div class="crumbs">Az egység COFOG-besorolása: ${codeLink(u.code)}${u.status ? ` <span class="flag">${esc(u.status)}</span>` : ''}</div>` : '') +
       (same.length > 1 ? `<div class="bridge-bar"><span class="bridge-lbl">Ugyanez az egység más SZMSZ-ekben:</span>${same.map(v => `<a href="#" class="chip${v === u ? ' disp' : ''}" data-szmsz="${v.id}">${esc(period(docs[v.doc]))} · ${v.total}</a>`).join('')}</div>` : '') +
       (D.refs && D.refs[u.i] ? `<div class="note"><b>Hivatkozott szöveg (${esc(D.refs[u.i].cite)}):</b> az egység feladatait az SZMSZ erre a §-ra bízza; a hivatkozott §, szó szerint, a tárgyi SZMSZ-ből:<ul>${D.refs[u.i].texts.map(t => `<li>${esc(t)}</li>`).join('')}</ul></div>` : '') +
       `<h2 class="sec"><span>Saját feladatok (${own.length})</span></h2>` +
@@ -341,10 +350,10 @@ window.SzmszView = (() => {
     const runs = [];
     for (const t of th.occ) {
       const u = units[t.unit], d = docs[u.doc], last = runs[runs.length - 1];
-      if (last && last.code === u.code && last.org === d.org) { last.until = d.until; last.disputed ||= u.status === 'vitatott'; continue; }
-      runs.push({ code: u.code, org: d.org, from: d.from, until: d.until, disputed: u.status === 'vitatott' });
+      if (last && last.code === u.code && last.org === d.org) { last.until = d.until; last.disputed ||= u.status === 'vitatott'; last.weak ||= u.status === 'egy szavazat'; continue; }
+      runs.push({ code: u.code, org: d.org, from: d.from, until: d.until, disputed: u.status === 'vitatott', weak: u.status === 'egy szavazat' });
     }
-    const funcHtml = runs.map(r => `${codeLink(r.code)}${r.disputed ? ' <span class="flag">vitatott</span>' : ''} <span class="sub-holder">(${esc(yr(r.from))}–${esc(yr(r.until))}, ${esc(orgName(r.org))})</span>`).join(' → ');
+    const funcHtml = runs.map(r => `${codeLink(r.code)}${r.disputed ? ' <span class="flag">vitatott</span>' : ''}${r.weak ? ' <span class="flag" title="Az egység kódját egyetlen szavazat adta, nem kettő">egy szavazat</span>' : ''} <span class="sub-holder">(${esc(yr(r.from))}–${esc(yr(r.until))}, ${esc(orgName(r.org))})</span>`).join(' → ');
     const transfers = th.transfers.length ? `<h2 class="sec"><span>Szövegvándorlás szervezetek között (${th.transfers.length})</span><span class="sub-hint">az SZMSZ-ek szövegéből következik (nem a tényleges jogi átadás napja): az átadónál a szöveg kikerül, az átvevőnél ugyanekkor megjelenik</span></h2>` +
       `<div class="tiles"><a class="tile main" data-chart-link href="szmsz-transfer-overview.html"><b>Ennek a feladatnak az útja az ábrán →</b><span>Az átadások ábrája csak erre a feladatra szűrve; onnan egy kattintással az összkép.</span></a></div>` +
       `<table class="det"><tr><th>Mikor</th><th>Honnan</th><th>Hová</th><th>Csomag</th></tr>${th.transfers.map(x => {
@@ -366,7 +375,7 @@ window.SzmszView = (() => {
     $('right').innerHTML = `<div class="crumbs">Feladatfonal · ${esc(span(th))} · ${th.docs.length} SZMSZ · ${th.orgs.length} szervezet</div>` +
       `<div class="title-row"><h1>${hl(th.text)}</h1><a class="ptab-chart" data-chart-link href="szmsz-transfer-overview.html">Az útja az ábrán ↗</a></div>` +
       `<div class="crumbs">Funkció változatonként, az egység besorolása szerint: ${funcHtml}${th.codes.length > 1 ? ' ' + CODE_CHANGES : ''}</div>` +
-      taskCodeHtml(th.tcode) +
+      taskCodeHtml(th.tcode) + identityNotes(th.docs) +
       `<h2 class="sec"><span>Szervezetek és időszakok</span><span class="sub-hint">ahol az SZMSZ ezt a feladatot tartalmazza</span></h2>${axis}${orgHtml}` + transfers +
       `<h2 class="sec"><span>Változatok (${th.occ.length} SZMSZ)</span><span class="sub-hint">a szöveg csak ott, ahol változott</span></h2>` +
       `<table class="det"><tr><th>Évek</th><th>Szervezet / egység · kód</th><th>Szöveg</th></tr>${versionRows}</table>` +
