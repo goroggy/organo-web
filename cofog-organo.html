@@ -636,7 +636,8 @@
       const a = $('navChart');
       const q = f ? (f.code ? 'code=' + encodeURIComponent(f.code) : 'thread=' + encodeURIComponent(f.thread)) : '';
       history.replaceState(null, '', q ? '#' + q : location.pathname + location.search);
-      const href = q ? 'szmsz-transfer-overview.html?' + q + '&name=' + encodeURIComponent(f.name) : 'szmsz-transfer-overview.html';
+      const href = q ? 'szmsz-transfer-overview.html?' + q + '&name=' + encodeURIComponent(f.name) +
+        (f.held ? '&held=' + encodeURIComponent(f.held) : '') : 'szmsz-transfer-overview.html';
       a.href = href;
       a.textContent = q ? 'Átadások ábrája: ' + (f.code ? f.code : 'ez a feladat') : 'Átadások ábrája';
       a.title = q ? 'Az ábra a kiválasztásra szűrve: ' + f.name + ' (onnan egy kattintással az összkép)' : 'Az összes átadás';

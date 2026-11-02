@@ -264,7 +264,7 @@ window.SzmszView = (() => {
     }
     const funcHtml = runs.map(r => `${codeLink(r.code)}${r.disputed ? ' <span class="flag">vitatott</span>' : ''} <span class="sub-holder">(${esc(yr(r.from))}–${esc(yr(r.until))}, ${esc(orgName(r.org))})</span>`).join(' → ');
     const transfers = th.transfers.length ? `<h2 class="sec"><span>Átadás (${th.transfers.length})</span><span class="sub-hint">az átadónál a szöveg kikerül az SZMSZ-ből, az átvevőnél ugyanekkor megjelenik</span></h2>` +
-      `<div class="tiles"><a class="tile main" href="szmsz-transfer-overview.html?thread=${th.id.slice(1)}&name=${encodeURIComponent('„' + (th.text.length > 70 ? th.text.slice(0, 70) + '…' : th.text) + '”')}"><b>Ennek a feladatnak az útja az ábrán →</b><span>Az átadások ábrája csak erre a feladatra szűrve; onnan egy kattintással az összkép.</span></a></div>` +
+      `<div class="tiles"><a class="tile main" data-chart-link href="szmsz-transfer-overview.html"><b>Ennek a feladatnak az útja az ábrán →</b><span>Az átadások ábrája csak erre a feladatra szűrve; onnan egy kattintással az összkép.</span></a></div>` +
       `<table class="det"><tr><th>Mikor</th><th>Honnan</th><th>Hová</th><th>Csomag</th></tr>${th.transfers.map(x => {
         const p = x.pkg, ua = units[x.a.unit], ub = units[x.b.unit];
         return `<tr><td style="white-space:nowrap">${esc(p.gained)}</td>` +
@@ -282,7 +282,7 @@ window.SzmszView = (() => {
       return `<tr><td style="white-space:nowrap">${esc(yr(d.from))}–${esc(yr(d.until))}</td><td><b>${esc(orgName(d.org))}</b><div class="sub-holder"><a href="#" data-szmsz="${u.id}">${esc(u.number)} ${esc(u.name)}</a>${u.code ? ` · ${esc(u.code)}` : ''}</div></td><td>${mark}${cell}</td></tr>`;
     }).join('');
     $('right').innerHTML = `<div class="crumbs">Feladatfonal · ${esc(span(th))} · ${th.docs.length} SZMSZ · ${th.orgs.length} szervezet</div>` +
-      `<div class="title-row"><h1>${hl(th.text)}</h1>${th.transfers.length ? '<a class="ptab-chart" data-chart-link href="szmsz-transfer-overview.html">Átadások ábrája ↗</a>' : ''}</div>` +
+      `<div class="title-row"><h1>${hl(th.text)}</h1><a class="ptab-chart" data-chart-link href="szmsz-transfer-overview.html">Az útja az ábrán ↗</a></div>` +
       `<div class="crumbs">Funkció változatonként, az egység besorolása szerint: ${funcHtml}${th.codes.length > 1 ? ' ' + CODE_CHANGES : ''}</div>` +
       taskCodeHtml(th.tcode) +
       `<h2 class="sec"><span>Szervezetek és időszakok</span><span class="sub-hint">ahol az SZMSZ ezt a feladatot tartalmazza</span></h2>${axis}${orgHtml}` + transfers +
@@ -394,7 +394,9 @@ window.SzmszView = (() => {
     // the header's chart link follows the selection: a task thread filters the chart to its transfers
     if (window.organoChartFilter) {
       const th = key.startsWith('f') ? threads[+key.slice(1)] : null;
-      window.organoChartFilter(th && th.transfers.length ? { thread: key.slice(1), name: '„' + (th.text.length > 70 ? th.text.slice(0, 70) + '…' : th.text) + '”' } : null);
+      // every task: where it was (its holders, for the chart's highlight) and where it moved
+      window.organoChartFilter(th ? { thread: key.slice(1), name: '„' + (th.text.length > 70 ? th.text.slice(0, 70) + '…' : th.text) + '”',
+        held: th.docs.map(d => [d.org, d.from, d.until || ''].join('|')).join(';') } : null);
     }
   }
 
