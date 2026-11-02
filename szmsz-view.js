@@ -70,11 +70,38 @@ window.SzmszView = (() => {
   const yr = s => (s ? s.slice(0, 4) : '');
   const period = d => `${d.from} – ${d.until || 'máig'}`;
   const docsOf = org => docs.filter(d => d.org === org).sort((a, b) => a.from.localeCompare(b.from));
+  // A query is words, not a phrase: 'bizonyítékok beszerzése' finds '… a szükséges bizonyítékok beszerzéséről'. Every
+  // word of three letters or more must start a word of the text; a long word loses its last three letters first,
+  // so a case ending or a possessive does not stop it. "…" in quotes is an exact phrase, as before.
+  const escRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  function matchers() {
+    const q = fold(query).trim();
+    const phrase = q.match(/^["„”'](.+?)["„”']?$/);
+    if (phrase) return [new RegExp(escRe(phrase[1]), 'g')];
+    return q.split(/\s+/).filter(w => w.length >= 3)
+      .map(w => w.length > 5 ? w.slice(0, Math.max(5, w.length - 3)) : w)
+      .map(stem => new RegExp('(?:^|[^a-z0-9])(' + escRe(stem) + '[a-z0-9]*)', 'g'));
+  }
   function hl(text) {
     if (!query) return esc(text);
-    const q = fold(query), f = fold(text), i = f.indexOf(q);
-    if (i < 0) return esc(text);
-    return esc(text.slice(0, i)) + '<mark>' + esc(text.slice(i, i + q.length)) + '</mark>' + esc(text.slice(i + q.length));
+    const f = fold(text), marks = [];
+    for (const re of matchers()) {
+      re.lastIndex = 0;
+      for (let m; (m = re.exec(f)); ) {
+        const word = m[1] ?? m[0], start = m.index + m[0].length - word.length;
+        marks.push([start, start + word.length]);
+        if (m[0].length === 0) re.lastIndex++;
+      }
+    }
+    if (!marks.length) return esc(text);
+    marks.sort((a, b) => a[0] - b[0]);
+    let out = '', at = 0;
+    for (const [s, e] of marks) {
+      if (s < at) continue;
+      out += esc(text.slice(at, s)) + '<mark>' + esc(text.slice(s, e)) + '</mark>';
+      at = e;
+    }
+    return out + esc(text.slice(at));
   }
 
   // ---- search -------------------------------------------------------------------------------------------
@@ -82,9 +109,11 @@ window.SzmszView = (() => {
     hitSet = null;
     if (query.length < MIN_QUERY) return;
     ensureFolded();
-    const q = fold(query);
+    const res = matchers();
+    if (!res.length) return;
     hitSet = new Set();
-    for (let k = 0; k < folded.length; k++) if (folded[k].includes(q)) hitSet.add(k);
+    for (let k = 0; k < folded.length; k++)
+      if (res.every(re => { re.lastIndex = 0; return re.test(folded[k]); })) hitSet.add(k);
   }
   const hitsIn = u => (u.hits ??= u.tasks.filter(t => hitSet.has(t.i)).length + u.children.reduce((s, c) => s + hitsIn(c), 0));
   function clearHitCache() { for (const u of units) delete u.hits; }
