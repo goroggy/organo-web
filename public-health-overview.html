@@ -1,0 +1,1191 @@
+<!doctype html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Népegészségügy · közfeladat-áramlás</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #102c29;
+      --muted: #62736f;
+      --paper: #f3f7f4;
+      --panel: rgba(255, 255, 255, .9);
+      --line: #cad8d2;
+      --green: #087a5b;
+      --green-dark: #075a47;
+      --orange: #ca6f27;
+      --orange-pale: #f6e4d3;
+      --blue: #3f79a9;
+      --violet: #7366a8;
+      --teal: #1c8d91;
+      --shadow: 0 18px 50px rgba(22, 53, 45, .11);
+      font-family: Inter, Aptos, "Segoe UI", system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 86% 4%, rgba(202, 111, 39, .11), transparent 24rem),
+        radial-gradient(circle at 8% 92%, rgba(8, 122, 91, .11), transparent 30rem),
+        var(--paper);
+    }
+
+    button, a { font: inherit; }
+
+    .page-shell {
+      width: min(1840px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 14px 0 16px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 9px;
+    }
+
+    .eyebrow {
+      margin: 0 0 7px;
+      color: var(--green);
+      font-size: .74rem;
+      font-weight: 850;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      max-width: none;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(1.45rem, 1.7vw, 2rem);
+      line-height: 1.08;
+      letter-spacing: -.025em;
+      white-space: nowrap;
+    }
+
+    .detail-link {
+      flex: none;
+      color: var(--green-dark);
+      font-size: .88rem;
+      font-weight: 760;
+      text-decoration: none;
+      border-bottom: 1px solid currentColor;
+    }
+
+    .map-shell {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: minmax(210px, auto) minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 16px;
+      padding: 10px 18px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, .75);
+    }
+
+    .segmented {
+      display: inline-flex;
+      padding: 4px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #eef4f0;
+    }
+
+    .segmented button,
+    .motion-toggle {
+      border: 0;
+      border-radius: 999px;
+      color: var(--ink);
+      background: transparent;
+      cursor: pointer;
+      font-size: .82rem;
+      font-weight: 780;
+    }
+
+    .segmented button { padding: 8px 13px; }
+
+    .segmented button[aria-pressed="true"] {
+      color: white;
+      background: var(--green);
+      box-shadow: 0 3px 10px rgba(8, 122, 91, .23);
+    }
+
+    #mode-summary {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: .72rem;
+      line-height: 1.25;
+    }
+
+    #mode-summary strong { color: var(--ink); }
+
+    .motion-toggle {
+      padding: 8px 13px;
+      border: 1px solid var(--line);
+      white-space: nowrap;
+    }
+
+    .playback-controls {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .speed-control {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin-right: 3px;
+      color: var(--muted);
+      font-size: .7rem;
+      font-weight: 760;
+    }
+
+    .speed-control select {
+      padding: 7px 24px 7px 9px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--ink);
+      background: white;
+      cursor: pointer;
+      font-size: .78rem;
+      font-weight: 760;
+    }
+
+    .step-button {
+      width: 34px;
+      height: 34px;
+      padding: 0;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      color: var(--ink);
+      background: white;
+      cursor: pointer;
+      font-weight: 850;
+    }
+
+    .motion-toggle[aria-pressed="true"] {
+      color: #8a481a;
+      border-color: #e2b88f;
+      background: var(--orange-pale);
+    }
+
+    #timeline {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+      padding: 12px 18px 0;
+    }
+
+    #timeline button {
+      position: relative;
+      padding: 5px 3px 11px;
+      border: 0;
+      color: var(--muted);
+      background: transparent;
+      cursor: pointer;
+      font-size: .78rem;
+      font-weight: 800;
+    }
+
+    #timeline button::after {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      height: 2px;
+      border-radius: 2px;
+      background: var(--line);
+      content: "";
+    }
+
+    #timeline button:hover,
+    #timeline button[aria-pressed="true"] { color: var(--green-dark); }
+
+    #timeline button[aria-pressed="true"]::after { background: var(--green); }
+
+    #flow-map {
+      position: relative;
+      padding: 4px 12px 0;
+    }
+
+    #flow-map svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      max-height: calc(100vh - 240px);
+      min-height: 470px;
+    }
+
+    .time-guide {
+      stroke: #dce6e1;
+      stroke-width: 1;
+      stroke-dasharray: 3 9;
+    }
+
+    #now-line {
+      stroke: #cf2f31;
+      stroke-width: 3;
+      filter: drop-shadow(0 0 5px rgba(207, 47, 49, .3));
+      transition: x1 .55s cubic-bezier(.2,.75,.25,1), x2 .55s cubic-bezier(.2,.75,.25,1);
+    }
+
+    #now-label {
+      fill: #b21f24;
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: .1em;
+      transition: x .55s cubic-bezier(.2,.75,.25,1);
+    }
+
+    .flow-ribbon {
+      fill: none;
+      stroke: var(--green);
+      stroke-width: var(--ribbon-width, 15);
+      stroke-linecap: round;
+      opacity: .38;
+      transition: opacity .25s ease, stroke .25s ease, stroke-width .25s ease;
+    }
+
+    #flow-map[data-mode="tasks"] .flow-ribbon { opacity: .55; }
+    #flow-map[data-mode="tasks"] .flow-ribbon[data-task="pharma"] { stroke: var(--orange); }
+    #flow-map[data-mode="tasks"] .flow-ribbon[data-task="nutrition"] { stroke: var(--violet); }
+    #flow-map[data-mode="tasks"] .flow-ribbon[data-task="epidemiology"] { stroke: var(--blue); }
+    #flow-map[data-mode="tasks"] .flow-ribbon[data-task="territorial"] { stroke: #7d8368; }
+    #flow-map[data-mode="tasks"] .flow-ribbon[data-task="primary"] { stroke: #a15f7a; }
+    #flow-map[data-mode="tasks"] .flow-ribbon[data-task="public"] { stroke: var(--teal); }
+
+    .flow-pulse {
+      fill: none;
+      stroke: white;
+      stroke-width: 3.2;
+      stroke-linecap: round;
+      stroke-dasharray: 1 31;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #flow-map[data-motion="true"] .flow-pulse {
+      opacity: .9;
+      animation: travel 1.55s linear infinite;
+    }
+
+    @keyframes travel { to { stroke-dashoffset: -64; } }
+
+    .org-node { cursor: pointer; }
+
+    .org-node rect {
+      fill: rgba(255,255,255,.96);
+      stroke: #b8ccc4;
+      stroke-width: 1.2;
+      filter: drop-shadow(0 5px 8px rgba(22, 53, 45, .12));
+      transition: stroke .2s ease, stroke-width .2s ease, opacity .2s ease;
+    }
+
+    .org-node.context rect {
+      fill: #f6f3ed;
+      stroke: #d7caba;
+    }
+
+    .org-node.merged rect {
+      fill: #e6f5ee;
+      stroke: var(--green);
+      stroke-width: 2;
+    }
+
+    .org-node:hover rect,
+    .org-node:focus rect {
+      stroke: var(--orange);
+      stroke-width: 2.5;
+      outline: none;
+    }
+
+    .org-name {
+      margin: 0;
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 790;
+      line-height: 1.15;
+    }
+
+    .org-meta {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 650;
+    }
+
+    .event-focus .flow-ribbon { opacity: .1; }
+    .event-focus .flow-ribbon.is-focused { opacity: .82; stroke-width: calc(var(--ribbon-width, 15) + 3px); }
+    .event-focus .org-node:not(.is-focused) rect { opacity: .42; }
+
+    #flow-map[data-mode="tasks"] .org-node rect {
+      opacity: .18 !important;
+      filter: grayscale(.65) drop-shadow(0 3px 5px rgba(22, 53, 45, .08));
+    }
+
+    #flow-map[data-mode="tasks"] .org-node foreignObject { opacity: .22; }
+    #flow-map[data-mode="tasks"] .org-node.is-focused rect { opacity: .25 !important; }
+    #flow-map[data-mode="tasks"].event-focus .flow-ribbon { opacity: .08; }
+    #flow-map[data-mode="tasks"].event-focus .flow-ribbon.is-focused { opacity: .94; }
+
+    #flow-map[data-mode="tasks"][data-task-story="playing"].event-focus .flow-ribbon.is-focused { opacity: .16; }
+    #flow-map[data-mode="tasks"][data-task-story="playing"].event-focus .flow-ribbon.is-task-current {
+      opacity: 1;
+      stroke-width: calc(var(--ribbon-width, 15) + 5px);
+    }
+
+    .task-label {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .18s ease;
+    }
+
+    #flow-map[data-mode="tasks"].event-focus .task-label.is-focused { opacity: .98; }
+    #flow-map[data-mode="tasks"][data-task-story="playing"].event-focus .task-label.is-focused { opacity: 0; }
+    #flow-map[data-mode="tasks"][data-task-story="playing"].event-focus .task-label.is-task-current { opacity: .98; }
+    #flow-map[data-mode="tasks"][data-task-story="summary"].event-focus .task-label.is-focused { opacity: 0; }
+
+    .task-label-shell {
+      transform-box: fill-box;
+      transform-origin: center;
+    }
+
+    .task-label.is-focused .task-label-shell {
+      animation: task-label-arrive .64s var(--label-delay, 0s) cubic-bezier(.18,.8,.24,1) both;
+    }
+
+    .task-label rect {
+      fill: var(--teal);
+      stroke: rgba(255,255,255,.92);
+      stroke-width: 1.5;
+      filter: drop-shadow(0 4px 7px rgba(16, 44, 41, .28));
+    }
+
+    .task-label[data-task="pharma"] rect { fill: var(--orange); }
+    .task-label[data-task="nutrition"] rect { fill: var(--violet); }
+    .task-label[data-task="epidemiology"] rect { fill: var(--blue); }
+    .task-label[data-task="territorial"] rect { fill: #70765c; }
+    .task-label[data-task="primary"] rect { fill: #a15f7a; }
+
+    .task-label text {
+      fill: white;
+      font-size: 16px;
+      font-weight: 820;
+      letter-spacing: .01em;
+      text-anchor: middle;
+      dominant-baseline: middle;
+    }
+
+    @keyframes task-label-arrive {
+      from { opacity: 0; transform: translateX(-18px) scale(.92); }
+      to { opacity: 1; transform: translateX(0) scale(1); }
+    }
+
+    .legend {
+      display: none;
+      flex-wrap: wrap;
+      gap: 4px 12px;
+      padding: 6px 0 0;
+      color: var(--muted);
+      font-size: .68rem;
+    }
+
+    .map-shell:has(#flow-map[data-mode="tasks"]) .legend { display: flex; }
+
+    .legend span { display: inline-flex; align-items: center; gap: 6px; }
+    .legend i { width: 20px; height: 5px; border-radius: 5px; background: var(--swatch); }
+
+    .event-card {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(190px, auto) 1fr auto;
+      gap: 12px;
+      align-items: baseline;
+      min-height: 0;
+      padding: 5px 10px;
+      border: 0;
+      border-left: 3px solid #b1123b;
+      border-radius: 4px 10px 10px 4px;
+      background: #fff0f3;
+    }
+
+    .event-card strong {
+      color: #b1123b;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1rem;
+      font-weight: 850;
+    }
+
+    .event-card p {
+      margin: 0;
+      color: #7f1d32;
+      font-size: .82rem;
+      font-weight: 680;
+      line-height: 1.35;
+    }
+
+    .task-story-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 320px;
+      max-width: 390px;
+      min-height: 38px;
+      padding: 6px 12px;
+      border: 1px solid rgba(177, 18, 59, .22);
+      border-radius: 18px;
+      color: #7f1d32;
+      background: rgba(255,255,255,.72);
+      font-size: .94rem;
+      font-weight: 800;
+      line-height: 1.18;
+    }
+
+    .task-story-status[hidden] { display: none; }
+    #task-story-count {
+      flex: none;
+      color: #b1123b;
+      font-size: .78rem;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    #task-story-label {
+      display: -webkit-box;
+      overflow: hidden;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+    }
+
+    .task-summary { position: relative; }
+    .task-summary[hidden] { display: none; }
+
+    .task-summary-toggle {
+      padding: 6px 11px;
+      border: 1px solid rgba(177, 18, 59, .28);
+      border-radius: 999px;
+      color: #7f1d32;
+      background: white;
+      cursor: pointer;
+      font-size: .72rem;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+
+    .task-summary-toggle::after { margin-left: 7px; content: "⌄"; }
+    .task-summary-toggle[aria-expanded="true"]::after { content: "⌃"; }
+    .task-summary-toggle:disabled { cursor: default; opacity: .72; }
+
+    .task-summary-panel {
+      position: absolute;
+      z-index: 20;
+      top: calc(100% + 9px);
+      right: 0;
+      width: min(720px, calc(100vw - 70px));
+      max-height: 360px;
+      padding: 10px;
+      overflow: auto;
+      border: 1px solid #d9b3bd;
+      border-radius: 14px;
+      background: rgba(255,255,255,.98);
+      box-shadow: 0 18px 45px rgba(61, 24, 34, .22);
+    }
+
+    .task-summary-panel[hidden] { display: none; }
+
+    .task-summary-item {
+      display: grid;
+      grid-template-columns: minmax(180px, 1fr) minmax(230px, 1.25fr);
+      gap: 3px 14px;
+      padding: 8px 9px;
+      border-bottom: 1px solid #f0dce1;
+    }
+
+    .task-summary-item:last-child { border-bottom: 0; }
+    .task-summary-item strong { font-family: inherit; font-size: .76rem; }
+    .task-summary-route { color: var(--ink); font-size: .73rem; font-weight: 720; }
+    .task-summary-evidence { grid-column: 1 / -1; color: var(--muted); font-size: .68rem; }
+    .task-summary-evidence a { color: #8f1736; font-weight: 780; }
+
+    .event-card.is-entering strong {
+      animation: caption-in .48s cubic-bezier(.2,.8,.25,1) both;
+    }
+
+    .event-card.is-entering p {
+      animation: caption-in .58s .12s cubic-bezier(.2,.8,.25,1) both;
+    }
+
+    @keyframes caption-in {
+      from { opacity: 0; transform: translateY(9px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 900px) {
+      .page-shell { width: min(100% - 16px, 1840px); padding-top: 10px; }
+      .topbar { align-items: start; flex-direction: column; gap: 8px; }
+      .toolbar { grid-template-columns: 1fr auto; }
+      h1 { white-space: normal; }
+      .story-column { grid-column: 1 / -1; grid-row: 2; }
+      #flow-map { overflow-x: auto; }
+      #flow-map svg { width: 1350px; max-height: none; }
+      .event-card { grid-template-columns: 1fr; gap: 5px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .flow-pulse { animation: none !important; }
+      .task-label-shell { animation: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Közfeladat-áramlás · áttekintő nézet</p>
+        <h1>Népegészségügyi és gyógyszerészeti szervezetek, 2004–2026</h1>
+      </div>
+      <a class="detail-link" href="public-health.html">Diavetítéses történet →</a>
+    </header>
+
+    <section class="map-shell" aria-labelledby="mode-summary">
+      <div class="toolbar">
+        <div class="mode-column">
+          <div class="segmented" aria-label="Az ábra olvasata">
+            <button id="organisation-mode" type="button" aria-pressed="true">Szervezetek</button>
+            <button id="task-mode" type="button" aria-pressed="false">Közfeladatok</button>
+          </div>
+          <p id="mode-summary"><strong>Szervezeti folytonosság.</strong> Melyik intézményből mi lett.</p>
+        </div>
+        <div class="story-column">
+          <aside class="event-card" aria-live="polite">
+            <strong id="event-heading">A teljes történet</strong>
+            <p id="event-description">Egyetlen képen látszik a 2017-es szétágazás, az OKI kialakulása és a 2023-as NNGYK-egyesülés.</p>
+            <div id="task-story-status" class="task-story-status" hidden>
+              <span id="task-story-count"></span>
+              <span id="task-story-label"></span>
+            </div>
+            <div id="task-summary" class="task-summary" hidden>
+              <button id="task-summary-toggle" class="task-summary-toggle" type="button" aria-expanded="false" aria-controls="task-summary-panel"></button>
+              <div id="task-summary-panel" class="task-summary-panel" role="region" aria-label="Az esemény feladatútjai" hidden></div>
+            </div>
+          </aside>
+          <div class="legend" aria-label="Közfeladatok színmagyarázata">
+            <span style="--swatch:var(--teal)"><i></i>népegészségügyi irányítás</span>
+            <span style="--swatch:var(--blue)"><i></i>járványügy</span>
+            <span style="--swatch:var(--orange)"><i></i>gyógyszerészet</span>
+            <span style="--swatch:var(--violet)"><i></i>táplálkozás-egészségügy</span>
+            <span style="--swatch:#7d8368"><i></i>területi hatóság</span>
+            <span style="--swatch:#a15f7a"><i></i>praxisprogramok</span>
+          </div>
+        </div>
+        <div class="playback-controls" aria-label="Történet lejátszása">
+          <label class="speed-control" for="task-speed">
+            <span>Tempó</span>
+            <select id="task-speed" aria-label="Feladatok tempója">
+              <option value="calm" selected>Nyugodt</option>
+              <option value="normal">Normál</option>
+              <option value="fast">Gyors</option>
+            </select>
+          </label>
+          <button id="previous-event" class="step-button" type="button" aria-label="Előző esemény">←</button>
+          <button id="motion-toggle" class="motion-toggle" type="button" aria-pressed="false">▶ Áramlás</button>
+          <button id="next-event" class="step-button" type="button" aria-label="Következő esemény">→</button>
+        </div>
+      </div>
+
+      <nav id="timeline" aria-label="Időmetszetek"></nav>
+
+      <div id="flow-map" data-mode="organisations" data-motion="false" aria-label="A szervezetek időbeli folyása">
+        <svg viewBox="0 0 1900 850" role="img" aria-labelledby="map-title map-description">
+          <title id="map-title">Népegészségügyi szervezetek szétválásai és egyesülései</title>
+          <desc id="map-description">Balról jobbra haladó, hét időmetszetes alluviális ábra. A szalagok a szervezeti és közfeladat-folytonosságot jelzik.</desc>
+          <g id="guides"></g>
+          <g id="now-marker" aria-label="A lejátszás jelenlegi időmetszete">
+            <line id="now-line" x1="140" y1="6" x2="140" y2="818"></line>
+            <text id="now-label" x="140" y="836" text-anchor="middle">MOST</text>
+          </g>
+          <g id="ribbons"></g>
+          <g id="pulses"></g>
+          <g id="nodes"></g>
+          <g id="task-labels" aria-label="Az aktuális időlépés közfeladatai"></g>
+        </svg>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const dates = [
+      { date: "2004-05-01", year: "2004", title: "Európai uniós kiinduló állapot", description: "Az OGYI, az OÉTI, az OTH, az OEK és az OKK külön szervezeti ágként jelenik meg.", source:"26/2004. (IV. 21.) ESzCsM rendelet", sourceUrl:"https://njt.hu/jogszabaly/2004-26-20-0M" },
+      { date: "2011-05-01", year: "2011", title: "Az OGYI beolvad a GYEMSZI-be", description: "A gyógyszerészeti hatósági feladatok a GYEMSZI szervezetében folytatódnak.", source:"59/2011. (IV. 12.) Korm. rendelet", sourceUrl:"https://njt.hu/jogszabaly/2011-59-20-22" },
+      { date: "2015-03-01", year: "2015", title: "Létrejön az OGYÉI", description: "Az OÉTI folytonossága és a GYEMSZI gyógyszerészeti, orvostechnikai és technológiaértékelési egységei egyesülnek.", source:"17/2015. (V. 11.) EMMI utasítás I./1.3–1.4.", sourceUrl:"https://njt.jog.gov.hu/jogszabaly/2015-17-B0-5H" },
+      { date: "2017-03-31", year: "2017", title: "Az OTH ötfelé ágazik", description: "Az irányítási, munkaegészségügyi, praxisprogram-, fővárosi és megyei feladatok külön utakra kerülnek; közben az OEK és az OKK az OKI-ban fut össze.", source:"378/2016. (XII. 2.) Korm. rendelet 19. §", sourceUrl:"https://njt.hu/jogszabaly/2016-378-20-22.13" },
+      { date: "2018-10-01", year: "2018", title: "Létrejön az NNK", description: "Az OKI névváltása és az EMMI tisztifőorvosi egységeinek visszaáramlása újra közös központot alkot.", source:"162/2018. (IX. 10.) Korm. rendelet 35–36. §", sourceUrl:"https://njt.hu/jogszabaly/2018-162-20-22" },
+      { date: "2023-08-01", year: "2023", title: "Az NNK és az OGYÉI egyesül", description: "A népegészségügyi és gyógyszerészeti ág az NNGYK-ban találkozik.", source:"333/2023. (VII. 20.) Korm. rendelet 18–19. §", sourceUrl:"https://njt.hu/jogszabaly/2023-333-20-22" },
+      { date: "2026-09-01", year: "2026", title: "Jelenlegi kontrollpont", description: "A rendelkezésre álló források alapján az NNGYK továbbra is egységes szervezet; a szöveges forrásütközés nem rajzol új ágat.", source:"4/2026. (VII. 27.) EÜM utasítás", sourceUrl:"https://njt.jog.gov.hu/jogszabaly/2026-4-B0-0B" }
+    ];
+
+    const nodes = [
+      { id:"ogyi-2004", org:"ogyi", date:"2004-05-01", x:35, y:70, name:"Országos Gyógyszerészeti Intézet", meta:"OGYI · PIR 310039" },
+      { id:"oeti-2004", org:"oeti", date:"2004-05-01", x:35, y:195, name:"Országos Élelmezés- és Táplálkozástudományi Intézet", meta:"OÉTI · PIR 598185" },
+      { id:"oth-2004", org:"oth", date:"2004-05-01", x:35, y:350, name:"Országos Tisztifőorvosi Hivatal", meta:"OTH · PIR 329530" },
+      { id:"oek-2004", org:"oek", date:"2004-05-01", x:35, y:500, name:"Országos Epidemiológiai Központ", meta:"OEK · PIR 630050" },
+      { id:"okk-2004", org:"okk", date:"2004-05-01", x:35, y:625, name:"Országos Közegészségügyi Központ", meta:"OKK · PIR 598789" },
+      { id:"gyemszi-2011", org:"gyemszi", date:"2011-05-01", x:305, y:70, name:"GYEMSZI", meta:"gyógyszerészeti ág" },
+      { id:"oeti-2011", org:"oeti", date:"2011-05-01", x:305, y:195, name:"OÉTI", meta:"táplálkozás-egészségügy" },
+      { id:"oth-2011", org:"oth", date:"2011-05-01", x:305, y:350, name:"OTH", meta:"központi tisztifőorvosi ág" },
+      { id:"oek-2011", org:"oek", date:"2011-05-01", x:305, y:500, name:"OEK", meta:"járványügy" },
+      { id:"okk-2011", org:"okk", date:"2011-05-01", x:305, y:625, name:"OKK", meta:"közegészségügy" },
+      { id:"ogyei-2015", org:"ogyei", date:"2015-03-01", x:575, y:130, name:"Országos Gyógyszerészeti és Élelmezés-egészségügyi Intézet", meta:"OGYÉI · PIR 598185", merged:true },
+      { id:"oth-2015", org:"oth", date:"2015-03-01", x:575, y:350, name:"Országos Tisztifőorvosi Hivatal", meta:"OTH · PIR 329530" },
+      { id:"oek-2015", org:"oek", date:"2015-03-01", x:575, y:500, name:"Országos Epidemiológiai Központ", meta:"OEK · PIR 630050" },
+      { id:"okk-2015", org:"okk", date:"2015-03-01", x:575, y:625, name:"Országos Közegészségügyi Központ", meta:"OKK · PIR 598789" },
+      { id:"ogyei-2017", org:"ogyei", date:"2017-03-31", x:845, y:95, name:"OGYÉI", meta:"gyógyszerészeti ág" },
+      { id:"emmi-2017", org:"emmi", date:"2017-03-31", x:845, y:245, name:"Emberi Erőforrások Minisztériuma", meta:"általános jogutódlás", context:true },
+      { id:"oki-2017", org:"oki", date:"2017-03-31", x:845, y:365, name:"Országos Közegészségügyi Intézet", meta:"OKI · PIR 598789", merged:true },
+      { id:"aeek-2017", org:"aeek", date:"2017-03-31", x:845, y:485, name:"Állami Egészségügyi Ellátó Központ", meta:"praxisprogramok", context:true },
+      { id:"bfkh-2017", org:"bfkh", date:"2017-03-31", x:845, y:605, name:"Budapest Főváros Kormányhivatala", meta:"fővárosi hatósági ág", context:true },
+      { id:"county-2017", org:"county", date:"2017-03-31", x:845, y:725, name:"Megyei kormányhivatalok", meta:"megyei hatósági ág", context:true },
+      { id:"ogyei-2018", org:"ogyei", date:"2018-10-01", x:1115, y:120, name:"OGYÉI", meta:"PIR 598185" },
+      { id:"nnk-2018", org:"nnk", date:"2018-10-01", x:1115, y:330, name:"Nemzeti Népegészségügyi Központ", meta:"NNK · PIR 598789", merged:true },
+      { id:"nngyk-2023", org:"nngyk", date:"2023-08-01", x:1385, y:220, name:"Nemzeti Népegészségügyi és Gyógyszerészeti Központ", meta:"NNGYK · PIR 598789", merged:true },
+      { id:"nngyk-2026", org:"nngyk", date:"2026-09-01", x:1655, y:220, name:"Nemzeti Népegészségügyi és Gyógyszerészeti Központ", meta:"jelenlegi kontrollpont", merged:true }
+    ];
+
+    const links = [
+      { from:"ogyi-2004", to:"gyemszi-2011", event:"2011-05-01", fromOrg:"ogyi", toOrg:"gyemszi", task:"pharma", weight:14, label:"gyógyszerészeti hatóság" },
+      { from:"oeti-2004", to:"oeti-2011", event:"2011-05-01", fromOrg:"oeti", toOrg:"oeti", task:"nutrition", weight:12, label:"táplálkozás-egészségügy" },
+      { from:"oth-2004", to:"oth-2011", event:"2011-05-01", fromOrg:"oth", toOrg:"oth", task:"public", weight:22, label:"központi népegészségügy" },
+      { from:"oek-2004", to:"oek-2011", event:"2011-05-01", fromOrg:"oek", toOrg:"oek", task:"epidemiology", weight:14, label:"járványügy" },
+      { from:"okk-2004", to:"okk-2011", event:"2011-05-01", fromOrg:"okk", toOrg:"okk", task:"public", weight:16, label:"közegészségügy" },
+      { from:"gyemszi-2011", to:"ogyei-2015", event:"2015-03-01", fromOrg:"gyemszi", toOrg:"ogyei", task:"pharma", weight:18, label:"gyógyszerészet, orvostechnika, technológiaértékelés" },
+      { from:"oeti-2011", to:"ogyei-2015", event:"2015-03-01", fromOrg:"oeti", toOrg:"ogyei", task:"nutrition", weight:13, label:"táplálkozás-egészségügy" },
+      { from:"oth-2011", to:"oth-2015", event:"2015-03-01", fromOrg:"oth", toOrg:"oth", task:"public", weight:22, label:"központi népegészségügy" },
+      { from:"oek-2011", to:"oek-2015", event:"2015-03-01", fromOrg:"oek", toOrg:"oek", task:"epidemiology", weight:14, label:"járványügy" },
+      { from:"okk-2011", to:"okk-2015", event:"2015-03-01", fromOrg:"okk", toOrg:"okk", task:"public", weight:16, label:"közegészségügy és munkaegészségügy" },
+      { from:"ogyei-2015", to:"ogyei-2017", event:"2017-03-31", fromOrg:"ogyei", toOrg:"ogyei", task:"pharma", weight:24, label:"OGYÉI-folytonosság", taskLabel:"gyógyszerészeti feladatok" },
+      { from:"oth-2015", to:"emmi-2017", event:"2017-03-31", fromOrg:"oth", toOrg:"emmi", task:"public", weight:15, label:"általános jogutódlás", taskLabel:"központi irányítás" },
+      { from:"oth-2015", to:"oki-2017", event:"2017-03-31", fromOrg:"oth", toOrg:"oki", task:"public", weight:10, label:"munkaegészségügyi és projektfeladatok" },
+      { from:"oth-2015", to:"aeek-2017", event:"2017-03-31", fromOrg:"oth", toOrg:"aeek", task:"primary", weight:8, label:"praxisprogramok" },
+      { from:"oth-2015", to:"bfkh-2017", event:"2017-03-31", fromOrg:"oth", toOrg:"bfkh", task:"territorial", weight:9, label:"fővárosi népegészségügyi hatóság" },
+      { from:"oth-2015", to:"county-2017", event:"2017-03-31", fromOrg:"oth", toOrg:"county", task:"territorial", weight:12, label:"megyei népegészségügyi hatóság" },
+      { from:"oek-2015", to:"oki-2017", event:"2017-03-31", fromOrg:"oek", toOrg:"oki", task:"epidemiology", weight:15, label:"járványügy és epidemiológia" },
+      { from:"okk-2015", to:"oki-2017", event:"2017-03-31", fromOrg:"okk", toOrg:"oki", task:"public", weight:16, label:"közegészségügyi intézményi folytonosság" },
+      { from:"ogyei-2017", to:"ogyei-2018", event:"2018-10-01", fromOrg:"ogyei", toOrg:"ogyei", task:"pharma", weight:24, label:"OGYÉI-folytonosság" },
+      { from:"emmi-2017", to:"nnk-2018", event:"2018-10-01", fromOrg:"emmi", toOrg:"nnk", task:"public", weight:15, label:"tisztifőorvosi egységek" },
+      { from:"oki-2017", to:"nnk-2018", event:"2018-10-01", fromOrg:"oki", toOrg:"nnk", task:"epidemiology", weight:25, label:"OKI névváltása és folytonossága" },
+      { from:"ogyei-2018", to:"nngyk-2023", event:"2023-08-01", fromOrg:"ogyei", toOrg:"nngyk", task:"pharma", weight:24, label:"gyógyszerészeti és élelmezés-egészségügyi ág" },
+      { from:"nnk-2018", to:"nngyk-2023", event:"2023-08-01", fromOrg:"nnk", toOrg:"nngyk", task:"public", weight:30, label:"népegészségügyi ág" },
+      { from:"nngyk-2023", to:"nngyk-2026", event:"2026-09-01", fromOrg:"nngyk", toOrg:"nngyk", task:"public", weight:34, label:"egységes NNGYK-folytonosság" }
+    ];
+
+    const svgNS = "http://www.w3.org/2000/svg";
+    const nodeById = new Map(nodes.map(node => [node.id, node]));
+    const nodeWidth = 210;
+    const nodeHeight = 72;
+    const dateXs = [140, 410, 680, 950, 1220, 1490, 1760];
+    const dateXByDate = new Map(dates.map((item, index) => [item.date, dateXs[index]]));
+    const storyDwellMs = 4600;
+    const taskStepDurations = { calm:3600, normal:2200, fast:1100 };
+    let taskStepMs = taskStepDurations.calm;
+    let storyIndex = 0;
+    let storyTimer = null;
+    let taskStepTimer = null;
+    let taskStepIndex = -1;
+
+    function svgElement(name, attributes = {}) {
+      const element = document.createElementNS(svgNS, name);
+      Object.entries(attributes).forEach(([key, value]) => element.setAttribute(key, value));
+      return element;
+    }
+
+    function wrapTaskLabel(textElement, value, maxLineWidth) {
+      const lines = [];
+      let currentLine = "";
+      value.trim().split(/\s+/).forEach(word => {
+        const candidate = currentLine ? `${currentLine} ${word}` : word;
+        textElement.textContent = candidate;
+        if (currentLine && textElement.getComputedTextLength() > maxLineWidth) {
+          lines.push(currentLine);
+          currentLine = word;
+        } else {
+          currentLine = candidate;
+        }
+      });
+      if (currentLine) lines.push(currentLine);
+
+      textElement.replaceChildren();
+      const lineHeight = 18;
+      const firstLineY = 1 - ((lines.length - 1) * lineHeight) / 2;
+      lines.forEach((line, index) => {
+        const tspan = svgElement("tspan", { x:0, y:firstLineY + index * lineHeight });
+        tspan.textContent = index < lines.length - 1 ? `${line} ` : line;
+        textElement.appendChild(tspan);
+      });
+      return lines;
+    }
+
+    function ribbonPath(link) {
+      const from = nodeById.get(link.from);
+      const to = nodeById.get(link.to);
+      const startX = from.x + nodeWidth;
+      const startY = from.y + nodeHeight / 2;
+      const endX = to.x;
+      const endY = to.y + nodeHeight / 2;
+      const bend = Math.max(55, (endX - startX) * .52);
+      return `M ${startX} ${startY} C ${startX + bend} ${startY}, ${endX - bend} ${endY}, ${endX} ${endY}`;
+    }
+
+    function renderTimeline() {
+      const timeline = document.getElementById("timeline");
+      dates.forEach(item => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.dataset.date = item.date;
+        button.textContent = item.year;
+        button.setAttribute("aria-pressed", "false");
+        button.setAttribute("aria-label", `${item.date} · ${item.title}`);
+        button.addEventListener("click", () => selectDateManually(item.date));
+        timeline.appendChild(button);
+      });
+    }
+
+    function renderGuides() {
+      const guideLayer = document.getElementById("guides");
+      dates.forEach((_item, index) => {
+        guideLayer.appendChild(svgElement("line", { x1:dateXs[index], y1:12, x2:dateXs[index], y2:815, class:"time-guide" }));
+      });
+    }
+
+    function taskLabelLayout() {
+      const layout = new Map();
+      const minimumGap = 42;
+      dates.slice(1).forEach(event => {
+        const eventLinks = links
+          .filter(link => link.event === event.date)
+          .map(link => {
+            const from = nodeById.get(link.from);
+            const to = nodeById.get(link.to);
+            return {
+              link,
+              naturalY:(from.y + to.y) / 2 + nodeHeight / 2
+            };
+          })
+          .sort((first, second) => first.naturalY - second.naturalY);
+
+        let previousY = 28 - minimumGap;
+        eventLinks.forEach(item => {
+          item.y = Math.max(item.naturalY, previousY + minimumGap);
+          previousY = item.y;
+        });
+
+        const overflow = Math.max(0, previousY - 800);
+        eventLinks.forEach(item => {
+          layout.set(item.link, {
+            x:dateXByDate.get(event.date) - 135,
+            y:item.y - overflow
+          });
+        });
+      });
+      return layout;
+    }
+
+    function separateTaskLabels() {
+      const spacing = 6;
+      dates.slice(1).forEach(event => {
+        const eventLabels = [...document.querySelectorAll(`.task-label[data-event="${event.date}"]`)]
+          .map(label => {
+            const matrix = label.transform.baseVal.consolidate().matrix;
+            const rect = label.querySelector("rect");
+            return {
+              label,
+              x:matrix.e,
+              y:matrix.f,
+              rectY:Number(rect.getAttribute("y")),
+              height:Number(rect.getAttribute("height"))
+            };
+          })
+          .sort((first, second) => first.y - second.y);
+
+        let previousBottom = -Infinity;
+        eventLabels.forEach(item => {
+          const top = item.y + item.rectY;
+          if (top < previousBottom + spacing) {
+            item.y += previousBottom + spacing - top;
+          }
+          previousBottom = item.y + item.rectY + item.height;
+        });
+
+        const overflow = Math.max(0, previousBottom - 800);
+        eventLabels.forEach(item => {
+          item.label.setAttribute("transform", `translate(${item.x} ${item.y - overflow})`);
+        });
+      });
+    }
+
+    function renderRibbons() {
+      const ribbonLayer = document.getElementById("ribbons");
+      const pulseLayer = document.getElementById("pulses");
+      const taskLabelLayer = document.getElementById("task-labels");
+      const labelLayout = taskLabelLayout();
+      links.forEach((link, index) => {
+        const path = ribbonPath(link);
+        const ribbon = svgElement("path", {
+          d:path,
+          class:"flow-ribbon",
+          "data-event":link.event,
+          "data-from":link.fromOrg,
+          "data-to":link.toOrg,
+          "data-task":link.task,
+          "data-link-index":index,
+          style:`--ribbon-width:${link.weight}px`
+        });
+        const title = svgElement("title");
+        title.textContent = link.label;
+        ribbon.appendChild(title);
+        ribbonLayer.appendChild(ribbon);
+        pulseLayer.appendChild(svgElement("path", { d:path, class:"flow-pulse", "data-event":link.event, "data-link-index":index, style:`animation-delay:-${(index % 7) * .18}s` }));
+
+        const fullLabel = link.label;
+        const taskLabel = link.taskLabel || fullLabel;
+        const point = labelLayout.get(link);
+        const labelGroup = svgElement("g", {
+          class:"task-label",
+          transform:`translate(${point.x} ${point.y})`,
+          "data-event":link.event,
+          "data-task":link.task,
+          "data-link-index":index,
+          "aria-label":fullLabel,
+          style:`--label-delay:${(index % 8) * .055}s`
+        });
+        const labelTitle = svgElement("title");
+        labelTitle.textContent = fullLabel;
+        labelGroup.appendChild(labelTitle);
+        const labelShell = svgElement("g", { class:"task-label-shell" });
+        const labelRect = svgElement("rect", { x:-44, y:-15, width:88, height:30, rx:15 });
+        labelShell.appendChild(labelRect);
+        const labelText = svgElement("text", { x:0, y:1 });
+        labelText.textContent = taskLabel;
+        labelShell.appendChild(labelText);
+        labelGroup.appendChild(labelShell);
+        taskLabelLayer.appendChild(labelGroup);
+        const labelLines = wrapTaskLabel(labelText, taskLabel, 226);
+        const longestLine = Math.max(...[...labelText.querySelectorAll("tspan")].map(line => line.getComputedTextLength()));
+        const labelWidth = Math.min(258, Math.max(88, Math.ceil(longestLine + 32)));
+        const labelHeight = 30 + (labelLines.length - 1) * 18;
+        labelRect.setAttribute("x", -labelWidth / 2);
+        labelRect.setAttribute("width", labelWidth);
+        labelRect.setAttribute("y", -labelHeight / 2);
+        labelRect.setAttribute("height", labelHeight);
+      });
+      separateTaskLabels();
+    }
+
+    function renderNodes() {
+      const nodeLayer = document.getElementById("nodes");
+      nodes.forEach(node => {
+        const group = svgElement("g", {
+          class:`org-node${node.context ? " context" : ""}${node.merged ? " merged" : ""}`,
+          transform:`translate(${node.x} ${node.y})`,
+          "data-org":node.org,
+          "data-date":node.date,
+          tabindex:"0",
+          role:"button",
+          "aria-label":`${node.name}. ${node.meta}`
+        });
+        group.appendChild(svgElement("rect", { width:nodeWidth, height:nodeHeight, rx:14 }));
+        const foreign = svgElement("foreignObject", { x:12, y:10, width:nodeWidth - 24, height:nodeHeight - 18, "pointer-events":"none" });
+        const card = document.createElement("div");
+        card.setAttribute("xmlns", "http://www.w3.org/1999/xhtml");
+        card.innerHTML = `<p class="org-name">${node.name}</p><span class="org-meta">${node.meta}</span>`;
+        foreign.appendChild(card);
+        group.appendChild(foreign);
+        group.addEventListener("click", () => focusDate(node.date));
+        group.addEventListener("keydown", event => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            focusDate(node.date);
+          }
+        });
+        nodeLayer.appendChild(group);
+      });
+    }
+
+    function focusDate(date) {
+      const map = document.getElementById("flow-map");
+      const selected = dates.find(item => item.date === date);
+      const alreadySelected = map.dataset.focusDate === date;
+      clearTimeout(taskStepTimer);
+      document.querySelectorAll(".flow-ribbon, .flow-pulse, .org-node, .task-label").forEach(item => item.classList.remove("is-focused", "is-task-current"));
+      document.querySelectorAll("#timeline button").forEach(button => button.setAttribute("aria-pressed", "false"));
+
+      if (alreadySelected) {
+        delete map.dataset.focusDate;
+        map.classList.remove("event-focus");
+        document.getElementById("event-heading").textContent = "A teljes történet";
+        document.getElementById("event-description").textContent = "Egyetlen képen látszik a 2017-es szétágazás, az OKI kialakulása és a 2023-as NNGYK-egyesülés. Válassz egy évszámot a kapcsolódó utak kiemeléséhez.";
+        return;
+      }
+
+      map.dataset.focusDate = date;
+      map.classList.add("event-focus");
+      const markerX = dateXByDate.get(date);
+      document.getElementById("now-line").setAttribute("x1", markerX);
+      document.getElementById("now-line").setAttribute("x2", markerX);
+      document.getElementById("now-label").setAttribute("x", markerX);
+      document.querySelector(`#timeline button[data-date="${date}"]`).setAttribute("aria-pressed", "true");
+      document.querySelectorAll(`.flow-ribbon[data-event="${date}"], .flow-pulse[data-event="${date}"], .org-node[data-date="${date}"], .task-label[data-event="${date}"]`).forEach(item => item.classList.add("is-focused"));
+      const relatedIds = links.filter(link => link.event === date).flatMap(link => [link.from, link.to]);
+      relatedIds.forEach(id => {
+        const node = document.querySelector(`.org-node[aria-label^="${CSS.escape(nodeById.get(id).name)}"]`);
+        if (node) node.classList.add("is-focused");
+      });
+      document.getElementById("event-heading").textContent = `${selected.year} · ${selected.title}`;
+      document.getElementById("event-description").textContent = selected.description;
+      const eventCard = document.querySelector(".event-card");
+      eventCard.dataset.event = date;
+      eventCard.classList.remove("is-entering");
+      void eventCard.offsetWidth;
+      eventCard.classList.add("is-entering");
+      if (map.dataset.mode === "tasks" && map.dataset.motion === "true") {
+        startTaskStory(date);
+      } else if (map.dataset.mode === "tasks") {
+        showTaskSummary(date, true);
+      } else {
+        hideTaskSummary();
+      }
+    }
+
+    function taskLinksFor(date) {
+      return links.filter(link => link.event === date && link.fromOrg !== link.toOrg);
+    }
+
+    function showTaskStoryStep(date, index) {
+      const eventLinks = taskLinksFor(date);
+      const status = document.getElementById("task-story-status");
+      document.querySelectorAll(".flow-ribbon, .flow-pulse, .task-label").forEach(item => item.classList.remove("is-task-current"));
+      if (!eventLinks.length || index < 0 || index >= eventLinks.length) {
+        status.hidden = true;
+        return;
+      }
+      const link = eventLinks[index];
+      const linkIndex = links.indexOf(link);
+      document.querySelectorAll(`[data-link-index="${linkIndex}"]`).forEach(item => item.classList.add("is-task-current"));
+      document.getElementById("task-story-count").textContent = `${index + 1} / ${eventLinks.length}`;
+      document.getElementById("task-story-label").textContent = link.taskLabel || link.label;
+      status.hidden = false;
+    }
+
+    function hideTaskSummary() {
+      const summary = document.getElementById("task-summary");
+      const button = document.getElementById("task-summary-toggle");
+      const panel = document.getElementById("task-summary-panel");
+      summary.hidden = true;
+      button.setAttribute("aria-expanded", "false");
+      panel.hidden = true;
+    }
+
+    function showTaskSummary(date, enabled) {
+      const eventLinks = taskLinksFor(date);
+      const event = dates.find(item => item.date === date);
+      const summary = document.getElementById("task-summary");
+      const button = document.getElementById("task-summary-toggle");
+      const panel = document.getElementById("task-summary-panel");
+      document.getElementById("task-story-status").hidden = true;
+      if (!event || !eventLinks.length) {
+        hideTaskSummary();
+        return;
+      }
+      document.getElementById("flow-map").dataset.taskStory = "summary";
+      document.querySelectorAll(".flow-ribbon, .flow-pulse, .task-label").forEach(item => item.classList.remove("is-task-current"));
+      const targetCount = new Set(eventLinks.map(link => link.to)).size;
+      button.textContent = `${eventLinks.length} feladat került át ${targetCount} szervezethez`;
+      button.disabled = !enabled;
+      button.setAttribute("aria-expanded", "false");
+      panel.hidden = true;
+      panel.replaceChildren();
+      const formattedDate = new Intl.DateTimeFormat("hu-HU", { dateStyle:"long" }).format(new Date(`${date}T12:00:00`));
+      eventLinks.forEach(link => {
+        const item = document.createElement("article");
+        item.className = "task-summary-item";
+        const title = document.createElement("strong");
+        title.textContent = link.taskLabel || link.label;
+        const route = document.createElement("span");
+        route.className = "task-summary-route";
+        route.textContent = `${nodeById.get(link.from).name} → ${nodeById.get(link.to).name}`;
+        const evidence = document.createElement("span");
+        evidence.className = "task-summary-evidence";
+        evidence.append(`${formattedDate} · `);
+        const source = document.createElement("a");
+        source.href = event.sourceUrl;
+        source.target = "_blank";
+        source.rel = "noreferrer";
+        source.textContent = event.source;
+        evidence.appendChild(source);
+        item.append(title, route, evidence);
+        panel.appendChild(item);
+      });
+      summary.hidden = false;
+    }
+
+    function toggleTaskSummary() {
+      const button = document.getElementById("task-summary-toggle");
+      if (button.disabled) return;
+      const panel = document.getElementById("task-summary-panel");
+      const expanded = button.getAttribute("aria-expanded") !== "true";
+      button.setAttribute("aria-expanded", String(expanded));
+      panel.hidden = !expanded;
+    }
+
+    function startTaskStory(date) {
+      clearTimeout(taskStepTimer);
+      const map = document.getElementById("flow-map");
+      const eventLinks = taskLinksFor(date);
+      if (map.dataset.mode !== "tasks" || !eventLinks.length) {
+        delete map.dataset.taskStory;
+        document.getElementById("task-story-status").hidden = true;
+        hideTaskSummary();
+        return;
+      }
+      hideTaskSummary();
+      map.dataset.taskStory = "playing";
+      taskStepIndex = 0;
+      showTaskStoryStep(date, taskStepIndex);
+      const advance = () => {
+        if (map.dataset.motion !== "true" || map.dataset.focusDate !== date) return;
+        taskStepIndex += 1;
+        if (taskStepIndex >= eventLinks.length) {
+          delete map.dataset.taskStory;
+          showTaskSummary(date, false);
+          return;
+        }
+        showTaskStoryStep(date, taskStepIndex);
+        taskStepTimer = setTimeout(advance, taskStepMs);
+      };
+      taskStepTimer = setTimeout(advance, taskStepMs);
+    }
+
+    function setMode(mode) {
+      const taskMode = mode === "tasks";
+      document.getElementById("flow-map").dataset.mode = mode;
+      document.getElementById("organisation-mode").setAttribute("aria-pressed", String(!taskMode));
+      document.getElementById("task-mode").setAttribute("aria-pressed", String(taskMode));
+      document.getElementById("mode-summary").innerHTML = taskMode
+        ? "<strong>Közfeladat-áramlás.</strong> Milyen feladatcsomag halad az utakon."
+        : "<strong>Szervezeti folytonosság.</strong> Melyik intézményből mi lett.";
+      if (taskMode && document.getElementById("flow-map").dataset.motion === "true") {
+        startTaskStory(document.getElementById("flow-map").dataset.focusDate);
+      } else if (taskMode) {
+        showTaskSummary(document.getElementById("flow-map").dataset.focusDate, true);
+      } else if (!taskMode) {
+        clearTimeout(taskStepTimer);
+        delete document.getElementById("flow-map").dataset.taskStory;
+        document.getElementById("task-story-status").hidden = true;
+        hideTaskSummary();
+      }
+    }
+
+    function toggleMotion() {
+      const map = document.getElementById("flow-map");
+      const button = document.getElementById("motion-toggle");
+      const isRunning = map.dataset.motion !== "true";
+      map.dataset.motion = String(isRunning);
+      button.setAttribute("aria-pressed", String(isRunning));
+      button.textContent = isRunning ? "Ⅱ Szünet" : "▶ Folytatás";
+      if (isRunning) {
+        startTaskStory(map.dataset.focusDate);
+        scheduleNextEvent();
+      } else {
+        clearTimeout(storyTimer);
+        clearTimeout(taskStepTimer);
+        delete map.dataset.taskStory;
+        showTaskSummary(map.dataset.focusDate, true);
+      }
+    }
+
+    function pausePlayback() {
+      const map = document.getElementById("flow-map");
+      const button = document.getElementById("motion-toggle");
+      clearTimeout(storyTimer);
+      clearTimeout(taskStepTimer);
+      map.dataset.motion = "false";
+      button.setAttribute("aria-pressed", "false");
+      button.textContent = "▶ Folytatás";
+      delete map.dataset.taskStory;
+      if (map.dataset.mode === "tasks") showTaskSummary(map.dataset.focusDate, true);
+    }
+
+    function selectDateManually(date) {
+      pausePlayback();
+      storyIndex = dates.findIndex(item => item.date === date);
+      focusDate(date);
+    }
+
+    function stepStory(direction) {
+      pausePlayback();
+      storyIndex = (storyIndex + direction + dates.length) % dates.length;
+      focusDate(dates[storyIndex].date);
+    }
+
+    function scheduleNextEvent() {
+      clearTimeout(storyTimer);
+      const activeTaskCount = document.getElementById("flow-map").dataset.mode === "tasks"
+        ? taskLinksFor(dates[storyIndex].date).length
+        : 0;
+      const dwell = Math.max(storyDwellMs, activeTaskCount * taskStepMs + 1300);
+      storyTimer = setTimeout(() => {
+        storyIndex = (storyIndex + 1) % dates.length;
+        focusDate(dates[storyIndex].date);
+        scheduleNextEvent();
+      }, dwell);
+    }
+
+    function setTaskSpeed(speed) {
+      taskStepMs = taskStepDurations[speed] || taskStepDurations.calm;
+      const map = document.getElementById("flow-map");
+      if (map.dataset.mode === "tasks" && map.dataset.motion === "true") {
+        startTaskStory(map.dataset.focusDate);
+        scheduleNextEvent();
+      }
+    }
+
+    function startAutoplay() {
+      const map = document.getElementById("flow-map");
+      const button = document.getElementById("motion-toggle");
+      map.dataset.motion = "true";
+      button.setAttribute("aria-pressed", "true");
+      button.textContent = "Ⅱ Szünet";
+      scheduleNextEvent();
+    }
+
+    renderTimeline();
+    renderGuides();
+    renderRibbons();
+    renderNodes();
+    focusDate(dates[0].date);
+    startAutoplay();
+    document.getElementById("organisation-mode").addEventListener("click", () => setMode("organisations"));
+    document.getElementById("task-mode").addEventListener("click", () => setMode("tasks"));
+    document.getElementById("task-speed").addEventListener("change", event => setTaskSpeed(event.target.value));
+    document.getElementById("motion-toggle").addEventListener("click", toggleMotion);
+    document.getElementById("previous-event").addEventListener("click", () => stepStory(-1));
+    document.getElementById("next-event").addEventListener("click", () => stepStory(1));
+    document.getElementById("task-summary-toggle").addEventListener("click", toggleTaskSummary);
+  </script>
+</body>
+</html>

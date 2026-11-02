@@ -1,0 +1,646 @@
+<!doctype html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ORGANO – Feladat és szervezet</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body.cofog-organo { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+    .shell { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(340px, 30%) minmax(0, 1fr); gap: 0; }
+    .left { display: flex; flex-direction: column; min-height: 0; border-right: 1px solid var(--line); background: var(--panel); }
+    .search { padding: 12px 14px; border-bottom: 1px solid var(--line); }
+    .search input { width: 100%; padding: 9px 11px; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
+    .tabs { display: flex; gap: 6px; margin-top: 9px; }
+    .tabs button { flex: 1; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: transparent; cursor: pointer; }
+    .tabs button.on { background: var(--green); border-color: var(--green); color: #fff; }
+    .hits { margin-top: 7px; color: var(--muted); font-size: .82rem; min-height: 1.1em; }
+    .tree { flex: 1; overflow: auto; padding: 6px 4px 24px; }
+    .tree ul { list-style: none; margin: 0; padding-left: 16px; }
+    .tree > ul { padding-left: 4px; }
+    .node { display: flex; align-items: baseline; gap: 5px; padding: 3px 6px; border-radius: 5px; cursor: pointer; line-height: 1.35; }
+    .node:hover { background: var(--green-soft); }
+    .node.sel { background: var(--green); color: #fff; }
+    .node.sel .code, .node.sel .cnt { color: rgba(255,255,255,.8); }
+    .node.empty { opacity: .5; }
+    .tog { width: 14px; flex: none; text-align: center; color: var(--muted); user-select: none; }
+    .node.sel .tog { color: #fff; }
+    .code { flex: none; color: var(--muted); font-variant-numeric: tabular-nums; font-size: .82rem; }
+    .lbl { flex: 1; }
+    .cnt { flex: none; color: var(--green); font-size: .78rem; font-weight: 700; }
+    .via { font-size: .8rem; color: var(--muted); margin-top: 1px; }
+    .node.sel .via { color: rgba(255,255,255,.85); }
+    mark { background: #ffe9a8; color: inherit; border-radius: 2px; }
+    .node.sel mark { background: #e3b94c; color: #17342c; }
+    .right { overflow: auto; padding: 22px 28px 60px; min-width: 0; }
+    .crumbs { color: var(--muted); font-size: .86rem; margin-bottom: 4px; }
+    .right h1 { font-size: clamp(1.4rem, 2.4vw, 2rem); margin-bottom: 10px; }
+    .note { padding: 10px 13px; border-left: 3px solid var(--amber); background: var(--amber-soft); color: #5b3b0a; font-size: .9rem; margin: 12px 0; }
+    .expl { margin: 12px 0 18px; padding: 13px 16px; background: var(--blue-soft); border-left: 3px solid var(--blue); }
+    .expl h3 { margin: 0 0 4px; font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: var(--blue); }
+    .expl p { margin: 0 0 10px; white-space: pre-line; line-height: 1.5; }
+    .expl ul.defl { margin: 0 0 10px; padding-left: 18px; line-height: 1.5; }
+    details.expl summary { cursor: pointer; color: var(--blue); font-size: .85rem; }
+    .bridge-bar { margin: 10px 0 16px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: .83rem; }
+    .bridge-lbl { color: var(--muted); font-weight: 600; margin-right: 2px; }
+    .chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 99px; background: var(--green-soft); font-size: .82rem; text-decoration: none; color: inherit; }
+    a.chip:hover { filter: brightness(0.95); }
+    .chip.disp { background: var(--amber-soft); }
+    .chip.nace-chip { background: var(--blue-soft); color: var(--blue); }
+    h2.sec { margin: 22px 0 8px; font-size: 1.05rem; display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+    h2.sec .sub-hint { font-size: .8rem; font-weight: 400; color: var(--muted); }
+    .org { border: 1px solid var(--line); border-radius: 8px; background: var(--panel); margin-bottom: 9px; }
+    .org > summary { list-style: none; cursor: pointer; padding: 10px 14px; display: grid; grid-template-columns: minmax(220px, 34%) 1fr; gap: 14px; align-items: center; }
+    .org > summary::-webkit-details-marker { display: none; }
+    .org .name { font-weight: 700; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+    .org .years { color: var(--muted); font-size: .82rem; margin-top: 3px; line-height: 1.35; }
+    .badge-var { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: .72rem; font-weight: 600; background: var(--blue-soft); color: var(--blue); }
+    .badge-qual { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: .72rem; font-weight: 500; background: var(--amber-soft); color: #7a4a0e; }
+    .bar { position: relative; height: 18px; background: #eef2ef; border-radius: 4px; overflow: hidden; }
+    .seg { position: absolute; top: 0; bottom: 0; background: var(--green); border-radius: 3px; min-width: 3px; border-right: 1px solid rgba(255,255,255,.65); }
+    .seg.alt { background: #2d6a5b; }
+    .seg.disp { background: var(--amber); }
+    .axis { position: relative; height: 16px; color: var(--muted); font-size: .72rem; margin-left: calc(34% + 14px + 14px); margin-right: 14px; }
+    .axis span { position: absolute; transform: translateX(-50%); }
+    table.det { width: 100%; border-collapse: collapse; font-size: .85rem; margin: 0 0 10px; }
+    table.det th, table.det td { text-align: left; padding: 6px 14px; border-top: 1px solid var(--line); vertical-align: top; }
+    table.det th { color: var(--muted); font-weight: 600; font-size: .76rem; }
+    .sub-holder { color: var(--muted); font-size: .79rem; margin-top: 1px; }
+    .qual-tag { display: inline-block; margin-top: 2px; padding: 1px 6px; border-radius: 4px; font-size: .75rem; background: var(--amber-soft); color: #7a4a0e; }
+    .wording-diff { color: var(--blue); font-size: .78rem; margin-left: 4px; }
+    .flag { display: inline-block; padding: 0 6px; border-radius: 4px; font-size: .74rem; background: var(--amber-soft); color: #7a4a0e; }
+    .empty-msg { color: var(--muted); padding: 20px 0; }
+    .org > .osum { padding: 10px 14px; display: grid; grid-template-columns: minmax(220px, 34%) 1fr; gap: 14px; align-items: center; }
+    ol.tasks { padding-left: 22px; line-height: 1.5; }
+    ol.tasks li { margin-bottom: 6px; }
+    /* start page: what this viewer can show, one tile each; detail behind <details> */
+    .topnav { display: flex; gap: 18px; margin-left: auto; font-size: .9rem; }
+    .topnav a { color: #fff; text-decoration: none; opacity: .85; }
+    .topnav a:hover { opacity: 1; text-decoration: underline; }
+    .start h1 { margin-bottom: 4px; }
+    .start .lead { color: var(--muted); margin: 0 0 16px; max-width: 62ch; }
+    .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; margin: 0 0 18px; }
+    .tile { display: block; padding: 14px 16px; border: 1px solid var(--line); border-radius: 10px; background: #fff;
+            color: inherit; text-decoration: none; cursor: pointer; }
+    .tile:hover { border-color: var(--green); box-shadow: 0 3px 10px rgba(20, 60, 45, .1); }
+    .tile b { display: block; font-size: 1.02rem; margin-bottom: 4px; color: var(--green); }
+    .tile span { font-size: .86rem; color: var(--muted); }
+    .tile.main { grid-column: span 2; background: #f1f7f3; border-color: var(--green); }
+    .ptabs { display: flex; flex-wrap: wrap; gap: 2px; border-bottom: 1px solid var(--line); margin: 16px 0 12px; }
+    .ptabs button { border: 0; background: none; padding: 8px 12px; cursor: pointer; color: var(--muted);
+                    border-bottom: 2px solid transparent; margin-bottom: -1px; font: inherit; }
+    .ptabs button.on { color: var(--green); border-bottom-color: var(--green); font-weight: 600; }
+    .ptabs button small { color: var(--muted); font-weight: 400; }
+    .summary-line { color: var(--muted); margin: 2px 0 0; }
+    details.more { margin: 10px 0; border-top: 1px solid var(--line); padding-top: 6px; font-size: .86rem; color: var(--muted); }
+    details.more > summary { cursor: pointer; color: var(--green); font-weight: 600; }
+    details.more[open] > summary { margin-bottom: 6px; }
+  </style>
+</head>
+<body class="cofog-organo">
+  <header class="topbar">
+    <a class="brand" href="termeszetvedelem.html">ORGANO</a>
+    <div class="scope">Feladat és szervezet</div>
+    <nav class="topnav">
+      <a href="#" id="navHome">Kezdőlap</a>
+      <a href="szmsz-transfer-overview.html">Átadások ábrája</a>
+      <a href="public-health-overview.html">Népegészségügyi példa</a>
+    </nav>
+  </header>
+  <div class="shell">
+    <aside class="left">
+      <div class="search">
+        <input id="q" type="search" placeholder="Keresés (kód, megnevezés, tárgykör, SZMSZ-feladat szövege)…" autocomplete="off">
+        <div class="tabs">
+          <button id="tabCofog" class="on" type="button">COFOG / kormányzati funkció</button>
+          <button id="tabNace" type="button">TEÁOR'08 / Szakágazat</button>
+          <button id="tabSzmsz" type="button">SZMSZ-feladatok</button>
+        </div>
+        <div class="hits" id="hits"></div>
+      </div>
+      <div class="tree" id="tree"></div>
+    </aside>
+    <section class="right" id="right">
+    </section>
+  </div>
+
+  <script src="data/cofog-poc.js"></script>
+  <script src="data/szmsz-cofog.js" onerror="window.SZMSZ_COFOG = null"></script>
+  <script src="szmsz-view.js"></script>
+  <script>
+  (() => {
+    const D = window.COFOG_POC;
+    const $ = id => document.getElementById(id);
+    const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const fold = s => String(s ?? '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const today = new Date();
+    const THREADS = new Map((D.threads || []).map(t => [t.id, t]));
+    const BRIDGE = D.bridge || {};
+
+    // Short ministry abbreviation helper for compact timeline summaries
+    function shortOrg(orgId) {
+      const name = D.orgs[orgId] || orgId;
+      const m = name.match(/\b([A-ZÁÉÍÓÖŐÚÜŰ])[a-záéíóöőúüű]+/g);
+      return m && m.length >= 2 ? m.map(w => w[0]).join('') : name;
+    }
+
+    // ---- trees -----------------------------------------------------------------------------------------------
+    function buildTree(nodes) {
+      const byCode = new Map(nodes.map(n => [n.code, { ...n, children: [] }]));
+      const roots = [];
+      for (const n of byCode.values()) (n.parent && byCode.get(n.parent) ? byCode.get(n.parent).children : roots).push(n);
+      return { byCode, roots };
+    }
+    // NACE: rows are in document order: section letter, 2-digit division, 3-char group (01.1), class (01.11)…
+    function buildNace(rows) {
+      const nodes = []; let section = null;
+      for (const r of rows) {
+        const c = r.code; let parent = null;
+        if (/^[A-Z]$/.test(c)) section = c;
+        else if (/^\d{2}$/.test(c)) parent = section;
+        else if (/^\d{2}\.\d$/.test(c)) parent = c.slice(0, 2);
+        else if (/^\d{2}\.\d{2}$/.test(c)) parent = c.slice(0, 4);
+        nodes.push({ ...r, parent });
+      }
+      // 15/2019. PM r. 3. melléklet: a 6 jegyű szakágazat első 4 jegye a TEÁOR-osztály (84.xx), az 5-6. jegy az ágazat
+      for (const [c, v] of Object.entries(D.szak || {}))
+        nodes.push({ code: c, label: v.label, includes: v.includes, excludes: v.excludes, parent: c.slice(0, 2) + '.' + c.slice(2, 4), isSzak: true });
+      return buildTree(nodes);
+    }
+    const EXPL = D.explain || {};
+    const explCode = n => (n.code.length >= 4 ? n.code.slice(0, 4) : n.code.padStart(2, '0'));
+    const LEAF = D.leafDef || {};
+    const ownExpl = n => (n.code.length === 6 ? LEAF[n.code] : (n.code.length === 4 || n.code.length <= 2 ? EXPL[explCode(n)] : null));
+    const explText = e => (e ? [e.title, e.lead, e.includes, e.excludes].join(' ') : '');
+    const cofog = buildTree(D.cofog);
+    const nace = buildNace(D.nace);
+    const naceNodeText = n => [n.label, n.includes, n.also_includes, n.hu_addition, n.excludes].join(' ');
+
+    // ---- assignments by COFOG leaf & NACE/Szakágazat bridge --------------------------------------------------
+    const byCode = new Map();
+    const byNaceCode = new Map();
+    const naceToCofog = new Map();
+
+    function bridgeForCofog(code) {
+      const entry = BRIDGE[code] || BRIDGE[code.slice(0, 4)];
+      if (!entry) return null;
+      return entry.inherits ? BRIDGE[entry.inherits] : entry;
+    }
+
+    for (const a of D.assignments) {
+      (byCode.get(a.code) ?? byCode.set(a.code, []).get(a.code)).push(a);
+      const b = bridgeForCofog(a.code);
+      if (b) {
+        for (const sc of b.admin || []) {
+          (byNaceCode.get(sc) ?? byNaceCode.set(sc, []).get(sc)).push({ ...a, bridgeKind: 'admin' });
+          (naceToCofog.get(sc) ?? naceToCofog.set(sc, new Set()).get(sc)).add(a.code);
+        }
+        for (const nc of b.sector || []) {
+          (byNaceCode.get(nc) ?? byNaceCode.set(nc, []).get(nc)).push({ ...a, bridgeKind: 'sector' });
+          (naceToCofog.get(nc) ?? naceToCofog.set(nc, new Set()).get(nc)).add(a.code);
+        }
+      }
+    }
+
+    function dedupRows(rows) {
+      const seen = new Set(), out = [];
+      for (const a of rows) {
+        const k = `${a.thread_id || a.scope}|${a.org}|${a.from}|${a.until}|${a.scope}|${a.holder}`;
+        if (!seen.has(k)) { seen.add(k); out.push(a); }
+      }
+      return out;
+    }
+
+    function collect(node, map, out) {
+      for (const a of map.get(node.code) ?? []) out.push(a);
+      for (const ch of node.children) collect(ch, map, out);
+      return out;
+    }
+    // SZMSZ units classified to COFOG leaves (scripts/szmsz_unit_codes.py -> szmsz_poc_build.py): their tasks
+    // inherit the unit's leaf. Rows: {unit, doc, org, from, until, name, number, disputed, tasks}.
+    const SC = window.SZMSZ_COFOG;
+    const unitsByCode = new Map();
+    if (SC) for (const [code, list] of Object.entries(SC.byCode))
+      unitsByCode.set(code, list.map(([u, disputed, ntasks]) => {
+        const [doc, number, name] = SC.units[u], [org, title, from, until] = SC.docs[doc];
+        return { unit: u, doc, org, title, from, until, number, name, disputed: !!disputed, tasks: ntasks };
+      }));
+    for (const n of cofog.byCode.values()) {
+      n.directRows = byCode.get(n.code) ?? [];
+      n.rows = dedupRows(collect(n, byCode, []));
+      n.directUnits = unitsByCode.get(n.code) ?? [];
+      n.unitRows = collect(n, unitsByCode, []);
+      n.orgIds = new Set([...n.rows.map(a => a.org), ...n.unitRows.map(r => r.org)]);
+      n.threadIds = new Set(n.rows.map(a => a.thread_id));
+    }
+    for (const n of nace.byCode.values()) {
+      n.directRows = byNaceCode.get(n.code) ?? [];
+      n.rows = dedupRows(collect(n, byNaceCode, []));
+      n.orgIds = new Set(n.rows.map(a => a.org));
+      n.threadIds = new Set(n.rows.map(a => a.thread_id));
+    }
+
+    // ---- state / tree rendering -------------------------------------------------------------------------------
+    let mode = 'cofog', query = '', selected = null; const open = new Set();
+    const current = () => (mode === 'cofog' ? cofog : nace);
+
+    function rowMatchesQuery(a, q) {
+      return fold(a.scope).includes(q) || fold(a.canonical).includes(q) || (a.qual && fold(a.qual).includes(q));
+    }
+    function nodeMatches(n) {
+      if (!query) return true;
+      const q = fold(query);
+      if (fold(n.code).includes(q) || fold(n.label).includes(q)) return true;
+      if (mode === 'cofog' && fold(explText(ownExpl(n))).includes(q)) return true;
+      if (mode === 'nace' && fold(naceNodeText(n)).includes(q)) return true;
+      if ((n.directRows || []).some(a => rowMatchesQuery(a, q))) return true;
+      return mode === 'cofog' && (n.directUnits || []).some(r => fold(r.name).includes(q));
+    }
+    function subtreeHasMatch(n) { return nodeMatches(n) || n.children.some(subtreeHasMatch); }
+    function hl(text) {
+      if (!query) return esc(text);
+      const q = fold(query), f = fold(text), i = f.indexOf(q);
+      if (i < 0) return esc(text);
+      return esc(text.slice(0, i)) + '<mark>' + esc(text.slice(i, i + q.length)) + '</mark>' + esc(text.slice(i + q.length));
+    }
+    let hitCount = 0;
+    function renderNode(n) {
+      if (query && !subtreeHasMatch(n)) return '';
+      const direct = nodeMatches(n); if (direct && query) hitCount++;
+      const expanded = open.has(n.code) || (query && n.children.some(subtreeHasMatch));
+      const orgs = n.orgIds ? n.orgIds.size : 0;
+      const kids = n.children.length && expanded ? '<ul>' + n.children.map(renderNode).join('') + '</ul>' : '';
+      let via = '';
+      if (query && direct && !fold(n.code + ' ' + n.label).includes(fold(query))) {
+        const q = fold(query);
+        const matchingRows = (n.directRows || []).filter(a => rowMatchesQuery(a, q));
+        if (matchingRows.length) {
+          const hitLabels = [...new Set(matchingRows.map(a =>
+            a.canonical && a.scope !== a.canonical && fold(a.scope).includes(q) && !fold(a.canonical).includes(q)
+              ? `${a.canonical} (${a.scope})`
+              : (a.canonical || a.scope)
+          ))];
+          via = `<div class="via">hatásköri tárgykör: ${hitLabels.map(hl).join(' · ')}</div>`;
+        } else if ((n.directUnits || []).some(r => fold(r.name).includes(q))) {
+          const names = [...new Set(n.directUnits.filter(r => fold(r.name).includes(q)).map(r => r.name))];
+          via = `<div class="via">SZMSZ-egység: ${names.slice(0, 4).map(hl).join(' · ')}${names.length > 4 ? ` · +${names.length - 4}` : ''}</div>`;
+        } else {
+          via = '<div class="via">a magyarázó szövegben</div>';
+        }
+      }
+      return `<li><div class="node${selected === n.code ? ' sel' : ''}${!orgs ? ' empty' : ''}" data-code="${esc(n.code)}">` +
+        `<span class="tog">${n.children.length ? (expanded ? '▾' : '▸') : ''}</span><span class="code">${esc(n.code)}</span>` +
+        `<span class="lbl">${hl(n.label)}${via}</span>${orgs ? `<span class="cnt" title="${orgs} szervezet · ${n.threadIds.size} hatásköri tárgykör">${orgs}</span>` : ''}</div>${kids}</li>`;
+    }
+    function renderTree() {
+      hitCount = 0;
+      $('tree').innerHTML = '<ul>' + current().roots.map(renderNode).join('') + '</ul>';
+      $('hits').textContent = query ? (hitCount ? `${hitCount} találat` : 'Nincs találat') : '';
+    }
+
+    // ---- right panel: timeline helpers ------------------------------------------------------------------------
+    const ymd = s => (s ? new Date(s + 'T00:00:00') : null);
+    function merge(periods) {
+      const p = periods.map(x => [ymd(x.from), x.until ? ymd(x.until) : null, x.status === 'vitatott']).sort((a, b) => a[0] - b[0]);
+      const out = [];
+      for (const [f, u, disp] of p) {
+        const last = out[out.length - 1];
+        if (last && last[1] !== null && f - last[1] <= 86400000 * 5) { last[1] = u === null ? null : (u > last[1] ? u : last[1]); last[2] = last[2] && disp; }
+        else if (last && last[1] === null) { last[2] = last[2] && disp; }
+        else out.push([f, u, disp]);
+      }
+      return out;
+    }
+    function mergeByOrg(periods) {
+      // Merge consecutive segments held by the SAME organisation so ministry handovers remain visible
+      const p = periods.map(x => ({ f: ymd(x.from), u: x.until ? ymd(x.until) : null, org: x.org, scope: x.scope, disp: x.status === 'vitatott' }))
+        .sort((a, b) => a.f - b.f || a.org.localeCompare(b.org));
+      const out = [];
+      for (const cur of p) {
+        const last = out[out.length - 1];
+        if (last && last.org === cur.org && last.u !== null && cur.f - last.u <= 86400000 * 5) {
+          last.u = cur.u === null ? null : (cur.u > last.u ? cur.u : last.u);
+          if (!last.scopes.includes(cur.scope)) last.scopes.push(cur.scope);
+          last.disp = last.disp && cur.disp;
+        } else if (last && last.org === cur.org && last.u === null) {
+          if (!last.scopes.includes(cur.scope)) last.scopes.push(cur.scope);
+          last.disp = last.disp && cur.disp;
+        } else {
+          out.push({ f: cur.f, u: cur.u, org: cur.org, scopes: [cur.scope], disp: cur.disp });
+        }
+      }
+      return out;
+    }
+    const yearOf = d => (d ? d.getFullYear() : null);
+    const fmt = d => (d ? d.toISOString().slice(0, 10) : 'máig');
+
+    function timeBounds(rows) {
+      const minT = Math.min(...rows.map(a => ymd(a.from).getTime()));
+      const maxT = Math.max(today.getTime(), ...rows.filter(a => a.until).map(a => ymd(a.until).getTime()));
+      const span = maxT - minT || 1;
+      const y0 = new Date(minT).getFullYear(), y1 = new Date(maxT).getFullYear();
+      const step = Math.max(1, Math.ceil((y1 - y0) / 8));
+      let axis = '';
+      for (let y = y0; y <= y1; y += step) axis += `<span style="left:${((new Date(y, 0, 1) - minT) / span * 100).toFixed(2)}%">${y}</span>`;
+      return { minT, maxT, span, axis: `<div class="axis">${axis}</div>` };
+    }
+
+    // ---- Hatáskör-fonalak (canonical competence threads across wording changes & ministry transfers) ----------
+    function threadSection(rows) {
+      if (!rows.length) return '';
+      const byThread = new Map();
+      for (const a of rows) {
+        const tid = a.thread_id || a.scope;
+        (byThread.get(tid) ?? byThread.set(tid, []).get(tid)).push(a);
+      }
+      const { minT, maxT, span, axis } = timeBounds(rows);
+      const list = [...byThread.entries()].map(([tid, rs]) => {
+        const th = THREADS.get(tid) || { id: tid, canonical: rs[0].canonical || rs[0].scope, variants: [...new Set(rs.map(x => x.scope))] };
+        const orgMerged = mergeByOrg(rs);
+        const variants = [...new Set(rs.map(x => x.scope))];
+        const quals = [...new Set(rs.map(x => x.qual).filter(Boolean))];
+        return { tid, th, rs, orgMerged, variants, quals };
+      }).sort((a, b) => a.th.canonical.localeCompare(b.th.canonical, 'hu'));
+
+      const html = list.map(({ th, rs, orgMerged, variants, quals }) => {
+        const segs = orgMerged.map((m, idx) => {
+          const l = ((m.f - minT) / span * 100), w = (((m.u ?? maxT) - m.f) / span * 100);
+          const tip = `${fmt(m.f)} – ${fmt(m.u)} · ${D.orgs[m.org]} · „${m.scopes.join(' / ')}”`;
+          return `<div class="seg${m.disp ? ' disp' : (idx % 2 ? ' alt' : '')}" style="left:${l.toFixed(2)}%;width:${Math.max(w, .5).toFixed(2)}%" title="${esc(tip)}"></div>`;
+        }).join('');
+
+        const chain = orgMerged.map(m => `${shortOrg(m.org)} (${yearOf(m.f)}–${m.u ? yearOf(m.u) : ''})`).join(' → ');
+        const varBadge = variants.length > 1 ? `<span class="badge-var" title="Jogszabályi szövegváltozatok: ${esc(variants.join(' · '))}">${variants.length} szövegváltozat</span>` : '';
+        const qualBadge = quals.length ? `<span class="badge-qual" title="${esc(quals.join(' · '))}">hatásköri megkötés / összevonás</span>` : '';
+
+        const det = rs.slice().sort((a, b) => a.from.localeCompare(b.from) || D.orgs[a.org].localeCompare(D.orgs[b.org], 'hu')).map(a => {
+          const diffNote = a.scope !== th.canonical ? `<span class="wording-diff">(szövegváltozat)</span>` : '';
+          const qualHtml = a.qual ? `<div><span class="qual-tag">${hl(a.qual)}</span></div>` : '';
+          const cofogLink = cofog.byCode.has(a.code) ? `<a href="#" data-goto="${esc(a.code)}">${esc(a.code)}</a>` : esc(a.code);
+          return `<tr>` +
+            `<td style="white-space:nowrap">${esc(a.from)} – ${a.until ? esc(a.until) : 'máig'}</td>` +
+            `<td><b>${esc(D.orgs[a.org])}</b><div class="sub-holder">${esc(a.holder)}</div></td>` +
+            `<td>${hl(a.scope)}${diffNote}${qualHtml}</td>` +
+            `<td style="white-space:nowrap">${cofogLink} · ${a.status === 'vitatott' ? '<span class="flag">vitatott</span>' : esc(a.status)}</td>` +
+          `</tr>`;
+        }).join('');
+
+        return `<details class="org thread"><summary>` +
+          `<div><div class="name"><span>${hl(th.canonical)}</span>${varBadge}${qualBadge}</div><div class="years">${esc(chain)}</div></div>` +
+          `<div class="bar">${segs}</div></summary>` +
+          `<table class="det"><tr><th>Időszak</th><th>Felelős szervezet</th><th>Akkori jogszabályi megfogalmazás</th><th>Funkció / Forrás</th></tr>${det}</table>` +
+        `</details>`;
+      }).join('');
+
+      return `${axis}${html}`;
+    }
+
+    // ---- Szervezetek (organisation timelines) -----------------------------------------------------------------
+    function orgSection(rows) {
+      if (!rows.length) return '<p class="empty-msg">Ehhez a csomóponthoz a POC adatai közt nincs szervezet.</p>';
+      const byOrg = new Map();
+      for (const a of rows) (byOrg.get(a.org) ?? byOrg.set(a.org, []).get(a.org)).push(a);
+      const { minT, maxT, span, axis } = timeBounds(rows);
+      const list = [...byOrg.entries()].map(([org, rs]) => ({ org, rs, merged: merge(rs) }))
+        .sort((a, b) => a.merged[0][0] - b.merged[0][0] || D.orgs[a.org].localeCompare(D.orgs[b.org], 'hu'));
+      const html = list.map(({ org, rs, merged }) => {
+        const segs = merged.map(([f, u, disp]) => {
+          const l = ((f - minT) / span * 100), w = (((u ?? maxT) - f) / span * 100);
+          return `<div class="seg${disp ? ' disp' : ''}" style="left:${l.toFixed(2)}%;width:${Math.max(w, .4).toFixed(2)}%" title="${fmt(f)} – ${fmt(u)}"></div>`;
+        }).join('');
+        const years = merged.map(([f, u]) => `${yearOf(f)}–${u ? yearOf(u) : ''}`).join(', ');
+        const det = rs.slice().sort((a, b) => (a.canonical || a.scope).localeCompare(b.canonical || b.scope, 'hu') || a.from.localeCompare(b.from)).map(a => {
+          const canonDiff = a.canonical && a.canonical !== a.scope ? `<div class="sub-holder">kanonikus fonal: <b>${hl(a.canonical)}</b></div>` : '';
+          const qualHtml = a.qual ? `<div><span class="qual-tag">${hl(a.qual)}</span></div>` : '';
+          return `<tr><td>${hl(a.scope)}${canonDiff}${qualHtml}</td><td style="white-space:nowrap">${esc(a.from)} – ${a.until ? esc(a.until) : 'máig'}</td><td>${esc(a.holder)}</td><td>${a.status === 'vitatott' ? '<span class="flag">vitatott besorolás</span>' : esc(a.status)}</td></tr>`;
+        }).join('');
+        return `<details class="org"><summary><div><div class="name">${esc(D.orgs[org])}</div><div class="years">${esc(years)} · ${new Set(rs.map(x => x.thread_id || x.scope)).size} hatásköri tárgykör</div></div><div class="bar">${segs}</div></summary>` +
+          `<table class="det"><tr><th>Tárgykör (akkori szöveg és kanonikus fonal)</th><th>Időszak</th><th>Felelős (akkori megnevezés)</th><th>Besorolás</th></tr>${det}</table></details>`;
+      }).join('');
+      return `${axis}${html}`;
+    }
+
+    function pathOf(tree, n) { const p = []; for (let x = n; x; x = x.parent ? tree.byCode.get(x.parent) : null) p.unshift(x); return p; }
+
+    function bridgeBlockCofog(n) {
+      const b = bridgeForCofog(n.code);
+      if (!b) return '';
+      const adminChips = (b.admin || []).map((c, i) =>
+        `<a href="#" class="chip nace-chip" data-goto-nace="${esc(c)}" title="Államháztartási szakágazat (15/2019. PM r. 3. melléklet)">Szakágazat ${esc(c)}: ${esc((b.admin_labels || [])[i] || '')}</a>`
+      ).join('');
+      const sectorChips = (b.sector || []).map((c, i) =>
+        `<a href="#" class="chip nace-chip" data-goto-nace="${esc(c)}" title="Szabályozott gazdasági ágazat (TEÁOR'08)">TEÁOR ${esc(c)}: ${esc((b.sector_labels || [])[i] || '')}</a>`
+      ).join('');
+      if (!adminChips && !sectorChips) return '';
+      return `<div class="bridge-bar"><span class="bridge-lbl">Kapcsolódó TEÁOR / szakágazat:</span>${adminChips}${sectorChips}</div>`;
+    }
+
+    // a page's sections behind tabs: the first one open, the others one click away (one tab bar per page)
+    function pageTabs(tabs) {
+      return `<div class="ptabs">${tabs.map((t, i) => `<button type="button" class="${i ? '' : 'on'}" data-ptab="${i}">${t[0]}</button>`).join('')}</div>` +
+        tabs.map((t, i) => `<div class="ppanel" data-ppanel="${i}"${i ? ' hidden' : ''}>${t[1]}</div>`).join('');
+    }
+    $('right').addEventListener('click', e => {
+      const b = e.target.closest('button[data-ptab]'); if (!b) return;
+      $('right').querySelectorAll('button[data-ptab]').forEach(x => x.classList.toggle('on', x === b));
+      $('right').querySelectorAll('.ppanel').forEach(p => { p.hidden = p.dataset.ppanel !== b.dataset.ptab; });
+    });
+
+    function showCofog(n) {
+      const path = pathOf(cofog, n), rows = n.rows;
+      const threadCnt = new Set(rows.map(a => a.thread_id || a.scope)).size;
+      const rawScopeCnt = new Set(rows.map(a => a.scope)).size;
+      const kind = n.children.length ? `Gyűjtő csomópont – az alatta lévő ${collectLeaves(n)} funkció összes hatásköri tárgyköre és szervezete` : 'Funkció (6 jegyű levél)';
+      const units = n.unitRows || [];
+      const unitCount = new Set(units.map(r => r.org + '|' + fold(r.name))).size;   // a unit counts once over its SZMSZ versions
+      $('right').innerHTML =
+        `<div class="crumbs">${path.map(p => esc(p.label)).join(' › ')}</div><h1>${esc(n.code)} ${esc(n.label)}</h1>` +
+        `<p class="summary-line">${esc(kind)} · ${n.orgIds.size} szervezet felel érte · ${threadCnt} rendeleti hatásköri tárgykör · ${unitCount} SZMSZ-egység sorolva ide</p>` +
+        bridgeBlockCofog(n) +
+        pageTabs([
+          [`Ki felel érte? <small>${n.orgIds.size}</small>`, `<h2 class="sec"><span>Szervezetek (${n.orgIds.size})</span><span class="sub-hint">a rendeleti hatáskörök szerint, időben</span></h2>` + orgSection(rows)],
+          [`Hatásköri tárgykörök <small>${threadCnt}</small>`, rows.length
+            ? `<h2 class="sec"><span>Rendeleti hatásköri tárgykörök (${threadCnt}${rawScopeCnt > threadCnt ? `, ${rawScopeCnt} szövegváltozatból összefűzve` : ''})</span><span class="sub-hint">kattints egy tárgykörre az átadások és a szövegváltozatok megtekintéséhez</span></h2>` + threadSection(rows)
+            : '<p class="empty-msg">Ehhez a funkcióhoz nincs rendeleti hatásköri tárgykör.</p>'],
+          ['SZMSZ-feladatok', `<h2 class="sec"><span>SZMSZ-feladatfonalak</span><span class="sub-hint">azok a feladatok, amelyeknek valamely változata e kód alatt állt, az itt töltött évekkel; ha a fonal mentén változik a kód, az jelezve van, nem elszavazva</span></h2>` +
+            `<div id="szmszThreads" data-code="${esc(n.code)}"><p class="empty-msg">Az SZMSZ-feladatok betöltése…</p></div>`],
+          ['Átadások', `<div class="tiles"><a class="tile main" href="szmsz-transfer-overview.html?code=${encodeURIComponent(n.code)}&name=${encodeURIComponent(n.code + ' ' + n.label)}">` +
+            `<b>E funkció feladatainak átadásai az ábrán →</b><span>Melyik minisztériumtól melyikhez kerültek a(z) ${esc(n.code)} kód alá tartozó SZMSZ-feladatok, átszervezési körönként. Onnan egy kattintással az összkép.</span></a></div>` +
+            `<p class="summary-line">A feladat kódja a feladatszintű besorolás, ahol van, különben az őt tartó egység kódja. Az egyes feladatok átadásai az „SZMSZ-feladatok” fülön, a feladat oldalán is látszanak.</p>`],
+          [`SZMSZ-egységek <small>${unitCount}</small>`, unitSection(units)],
+          ['Mit tartalmaz?', explBlock(n)],
+        ]);
+      // the task layer is large and loaded on first use; a later click may already show another node
+      const codes = new Set(); (function walk(x) { codes.add(x.code); x.children.forEach(walk); })(n);
+      window.SzmszView.threadsFor(codes, html => { const el = $('szmszThreads'); if (el && el.dataset.code === n.code) el.innerHTML = html; });
+    }
+
+    // ---- SZMSZ units under a COFOG node: one line per organisation + unit name, with every SZMSZ it appears in ----
+    function unitSection(rows) {
+      if (!SC) return '<div class="note">Az SZMSZ-egységek besorolása nincs betöltve (data/szmsz-cofog.js).</div>';
+      if (!rows.length) return `<h2 class="sec"><span>SZMSZ-egységek (0)</span></h2><p class="empty-msg">Ide a POC SZMSZ-egységei közül egy sincs sorolva.</p>`;
+      const groups = new Map();
+      for (const r of rows) {
+        const k = r.org + '|' + fold(r.name);
+        (groups.get(k) ?? groups.set(k, { org: r.org, name: r.name, rs: [] }).get(k)).rs.push(r);
+      }
+      const periods = rows.map(r => ({ from: r.from, until: r.until, org: r.org, status: r.disputed ? 'vitatott' : '' }));
+      const { minT, maxT, span, axis } = timeBounds(periods);
+      const byOrg = new Map();
+      for (const r of periods) (byOrg.get(r.org) ?? byOrg.set(r.org, []).get(r.org)).push(r);
+      const bars = [...byOrg.entries()].sort((a, b) => D.orgs[a[0]] && D.orgs[b[0]] ? D.orgs[a[0]].localeCompare(D.orgs[b[0]], 'hu') : 0).map(([org, ps]) => {
+        const merged = merge(ps);
+        const segs = merged.map(([f, u, disp]) => `<div class="seg${disp ? ' disp' : ''}" style="left:${((f - minT) / span * 100).toFixed(2)}%;width:${Math.max(((u ?? maxT) - f) / span * 100, .4).toFixed(2)}%" title="${fmt(f)} – ${fmt(u)}"></div>`).join('');
+        const nUnits = [...groups.values()].filter(g => g.org === org).length;
+        return `<div class="org"><div class="osum"><div><div class="name">${esc(D.orgs[org] || org)}</div><div class="years">${esc(merged.map(([f, u]) => `${yearOf(f)}–${u ? yearOf(u) : ''}`).join(', '))} · ${nUnits} egység</div></div><div class="bar">${segs}</div></div></div>`;
+      }).join('');
+      const list = [...groups.values()].sort((a, b) => (D.orgs[a.org] || '').localeCompare(D.orgs[b.org] || '', 'hu') || a.name.localeCompare(b.name, 'hu'));
+      const trs = list.map(g => {
+        const rs = g.rs.sort((a, b) => a.from.localeCompare(b.from)), last = rs[rs.length - 1];
+        const years = rs.map(r => `${r.from.slice(0, 4)}–${r.until ? r.until.slice(0, 4) : ''}`).join(', ');
+        const tasks = rs.reduce((s, r) => s + r.tasks, 0);
+        return `<tr><td><b>${esc(D.orgs[g.org] || g.org)}</b><div class="sub-holder">${hl(g.name)}${rs.some(r => r.disputed) ? ' <span class="flag">vitatott besorolás</span>' : ''}</div></td>` +
+          `<td>${esc(years)}</td><td style="white-space:nowrap"><a href="#" data-szmsz-unit="${last.unit}">${tasks} feladat →</a></td></tr>`;
+      }).join('');
+      const nTasks = rows.reduce((s, r) => s + r.tasks, 0);
+      return `<h2 class="sec"><span>SZMSZ-egységek (${groups.size} egység, ${nTasks} feladat-előfordulás)</span><span class="sub-hint">az egység feladatai az egység besorolását öröklik</span></h2>` +
+        `${axis}${bars}<table class="det"><tr><th>Szervezet / egység</th><th>SZMSZ-ek hatálya</th><th>Feladatok</th></tr>${trs}</table>`;
+    }
+
+    function explBlock(n) {
+      return (n.code.length === 6 ? leafBlock(n) : '') + classBlock(n);
+    }
+    function leafBlock(n) {
+      const d = LEAF[n.code];
+      if (!d) return '<div class="note">Ehhez a funkcióhoz a 15/2019. PM rendelet 2. mellékletében nincs definíció.</div>';
+      const items = t => t.split(/(?:^|(?<=[.;,]))\s*-\s+/).filter(x => x.trim());
+      const goto = t => hl(t).replace(/\b(\d{6})\b/g, (m, c) => (cofog.byCode.has(c) ? `<a href="#" data-goto="${c}">${c}</a>` : m));
+      const block = (title, t) => (t ? `<h3>${title}</h3><ul class="defl">${items(t).map(x => `<li>${goto(x)}</li>`).join('')}</ul>` : '');
+      return `<div class="expl"><h3>A funkció definíciója · ${esc(n.code)} ${esc(d.label)}</h3>` +
+        block('Ide tartozik', d.includes) + block('Nem ebbe a funkcióba tartozik', d.excludes) +
+        `<p style="margin:8px 0 0;font-size:.8rem;color:var(--muted)">Forrás: 15/2019. (XII. 7.) PM rendelet 2. melléklet.</p></div>`;
+    }
+    function classBlock(n) {
+      const e = EXPL[explCode(n)];
+      if (!e) return n.code.length === 6 ? '' : '<div class="note">Ehhez a csomóponthoz a KSH COFOG-tartalmában nincs külön magyarázat.</div>';
+      const inherited = n.code.length === 6;
+      const block = (title, text) => (text ? `<h3>${title}</h3>${text.split('\n').map(x => `<p>${hlText(x)}</p>`).join('')}` : '');
+      const body = `${block('Tartalom', e.lead)}${block('Ebbe a funkcióba tartozik', e.includes)}${block('Nem ebbe a funkcióba tartozik', e.excludes)}` +
+        `<p style="margin:8px 0 0;font-size:.8rem;color:var(--muted)">Forrás: KSH, COFOG tartalom (ksh.hu/docs/osztalyozasok/cofog/cofog_tartalom.pdf).</p>`;
+      if (inherited) return `<details class="expl"><summary><b>A nemzetközi osztály (COFOG ${esc(e.num)}) magyarázata · ${esc(e.title)}</b></summary>${body}</details>`;
+      return `<div class="expl"><h3>${esc(e.num)} ${esc(e.title)}</h3>${body}</div>`;
+    }
+    function hlText(x) { return hl(x); }
+    function collectLeaves(n) { return n.children.length ? n.children.reduce((s, c) => s + collectLeaves(c), 0) : 1; }
+
+    function showNace(n) {
+      const path = pathOf(nace, n), rows = n.rows || [];
+      const threadCnt = new Set(rows.map(a => a.thread_id || a.scope)).size;
+      const rawScopeCnt = new Set(rows.map(a => a.scope)).size;
+      const block = (title, t) => (t && t !== 'None' ? `<h3>${title}</h3><p>${hl(t)}</p>` : '');
+      const cofogCodes = [...new Set(rows.map(a => a.code))].sort();
+      const cofogLinks = cofogCodes.length
+        ? `<div class="bridge-bar"><span class="bridge-lbl">Kapcsolódó COFOG funkciók:</span>` +
+          cofogCodes.map(c => {
+            const cn = cofog.byCode.get(c);
+            return `<a href="#" class="chip" data-goto="${esc(c)}">${esc(c)} ${esc(cn ? cn.label : '')}</a>`;
+          }).join('') + `</div>`
+        : '';
+      const srcNote = n.isSzak
+        ? `<p style="margin:8px 0 0;font-size:.8rem;color:var(--muted)">Forrás: 15/2019. (XII. 7.) PM rendelet 3. melléklet (államháztartási szakágazati rend).</p>`
+        : `<p style="margin:8px 0 0;font-size:.8rem;color:var(--muted)">Forrás: KSH TEÁOR'08 tartalmi meghatározások.</p>`;
+
+      $('right').innerHTML =
+        `<div class="crumbs">${path.map(p => esc(p.code + ' ' + p.label)).join(' › ')}</div><h1>${esc(n.code)} ${esc(n.label)}</h1>` +
+        `<p class="summary-line">${n.orgIds.size} szervezet felel érte · ${threadCnt} rendeleti hatásköri tárgykör · ${cofogCodes.length} kapcsolódó COFOG-funkció</p>` +
+        cofogLinks +
+        pageTabs([
+          [`Ki felel érte? <small>${n.orgIds.size}</small>`, rows.length
+            ? `<h2 class="sec"><span>Szervezetek (${n.orgIds.size})</span><span class="sub-hint">a rendeleti hatáskörök szerint, időben</span></h2>` + orgSection(rows)
+            : `<p class="empty-msg">Ehhez a TEÁOR-ágazathoz a POC 10 minisztériumának hatáskörei között nincs közvetlen hozzárendelés.</p>`],
+          [`Hatásköri tárgykörök <small>${threadCnt}</small>`, rows.length
+            ? `<h2 class="sec"><span>Rendeleti hatásköri tárgykörök (${threadCnt}${rawScopeCnt > threadCnt ? `, ${rawScopeCnt} szövegváltozatból összefűzve` : ''})</span></h2>` + threadSection(rows)
+            : '<p class="empty-msg">Nincs hozzárendelt hatásköri tárgykör.</p>'],
+          ['Mit tartalmaz?', `<div class="expl">${block('Ebbe tartozik', n.includes)}${block('Ebbe tartozik még', n.also_includes)}${block('Magyar kiegészítés', n.hu_addition)}${block('Nem ebbe tartozik', n.excludes)}${srcNote}</div>`],
+        ]);
+    }
+
+    function select(code, targetMode) {
+      if (targetMode && targetMode !== mode) {
+        mode = targetMode;
+        markTabs();
+      }
+      const n = current().byCode.get(code);
+      if (!n) return;
+      selected = code;
+      for (let p = n; p; p = p.parent ? current().byCode.get(p.parent) : null) if (p !== n) open.add(p.code);
+      mode === 'cofog' ? showCofog(n) : showNace(n);
+      renderTree();
+    }
+
+    // ---- events -----------------------------------------------------------------------------------------------
+    $('tree').addEventListener('click', e => {
+      if (mode === 'szmsz') return window.SzmszView.treeClick(e);
+      const el = e.target.closest('.node'); if (!el) return;
+      const code = el.dataset.code, n = current().byCode.get(code);
+      if (e.target.classList.contains('tog') && n.children.length) { open.has(code) ? open.delete(code) : open.add(code); renderTree(); return; }
+      if (n.children.length && !open.has(code)) open.add(code);
+      select(code);
+    });
+    $('right').addEventListener('click', e => {
+      if (mode === 'szmsz' && window.SzmszView.rightClick(e)) return;
+      const aUnit = e.target.closest('a[data-szmsz-unit]');
+      // the COFOG query (a code, a scope) means nothing among task texts and would empty the SZMSZ tree
+      if (aUnit) { e.preventDefault(); mode = 'szmsz'; selected = null; query = ''; $('q').value = ''; markTabs(); window.SzmszView.openUnit(+aUnit.dataset.szmszUnit, ''); return; }
+      const aThread = e.target.closest('a[data-szmsz-thread]');
+      if (aThread) { e.preventDefault(); mode = 'szmsz'; selected = null; query = ''; $('q').value = ''; markTabs(); window.SzmszView.openThread(+aThread.dataset.szmszThread); return; }
+      const aCofog = e.target.closest('a[data-goto]');
+      if (aCofog) { e.preventDefault(); select(aCofog.dataset.goto, 'cofog'); return; }
+      const aNace = e.target.closest('a[data-goto-nace]');
+      if (aNace) { e.preventDefault(); select(aNace.dataset.gotoNace, 'nace'); return; }
+    });
+    let timer; $('q').addEventListener('input', e => { clearTimeout(timer); timer = setTimeout(() => { query = e.target.value.trim(); if (mode === 'szmsz') return window.SzmszView.query(query); renderTree(); if (selected) { const n = current().byCode.get(selected); if (n) mode === 'cofog' ? showCofog(n) : showNace(n); } }, 120); });
+    const markTabs = () => ['Cofog', 'Nace', 'Szmsz'].forEach(t => $('tab' + t).classList.toggle('on', mode === t.toLowerCase()));
+    const HINT = {
+      cofog: 'A bal oldali fa a kormányzati funkciók (COFOG) rendje: egy funkcióra kattintva látszik, mely minisztériumok felelnek érte, és mely SZMSZ-feladatok tartoznak hozzá.',
+      nace: 'A bal oldali fa a szakágazatok (TEÁOR) rendje: egy ágazatra kattintva látszik a hozzá tartozó funkció és a felelős minisztériumok.',
+      szmsz: 'A bal oldali fa a minisztériumok SZMSZ-ei, azokon belül az egységek. Fent a kereső a feladatok szövegében is keres.',
+    };
+    const multiCnt = (D.threads || []).filter(t => t.variants && t.variants.length > 1).length;
+    // the start page of every tab: what the viewer can show, one tile each; the numbers behind a <details>
+    window.organoStartPage = m => `<div class="start"><h1>Feladat és szervezet</h1>` +
+      `<p class="lead">Mely minisztérium milyen feladatot lát el, és hogyan vándoroltak a feladatok 2010 és 2026 között. ${HINT[m]}</p>` +
+      `<div class="tiles">` +
+      `<a class="tile main" href="szmsz-transfer-overview.html"><b>Feladatátadások ábrája →</b><span>Melyik minisztériumtól melyikhez kerültek feladatok az átszervezésekkor, 2014–2026, idővonalon lejátszható.</span></a>` +
+      `<a class="tile" href="#" data-start="P"><b>Feladatátadások listája</b><span>Minden átadás: honnan, hová, mikor, hány feladat, egységenként.</span></a>` +
+      `<a class="tile" href="#" data-start="szmsz"><b>Minisztériumok és SZMSZ-ek</b><span>Az SZMSZ-ek egységei és feladatai; egy feladat útja a változatokon át.</span></a>` +
+      `<a class="tile" href="#" data-start="cofog"><b>Funkciók szerint (COFOG)</b><span>Kormányzati funkciónként: ki felel érte, mely feladatok tartoznak ide.</span></a>` +
+      `<a class="tile" href="#" data-start="nace"><b>Szakágazat szerint (TEÁOR)</b><span>Ugyanez a gazdasági ágazatok rendjéből nézve.</span></a>` +
+      `<a class="tile" href="public-health-overview.html"><b>Példa: népegészségügy →</b><span>Egy kidolgozott történet: a népegészségügyi intézmények szétválásai és egyesülései 2004–2026.</span></a>` +
+      `</div>` +
+      `<details class="more"><summary>Az adatokról</summary>${Object.keys(D.orgs).length} szervezet (10 minisztérium, a Pénzügyminisztérium két azonosítón); ` +
+      `${(D.threads || []).length} rendeleti hatásköri tárgykör (${multiCnt} több szövegváltozatból összefűzve); a feladatok a minisztériumok kiadáskori SZMSZ-eiből. ` +
+      `Hatásköri adatok: ${esc(D.generated)}. Prototípus: a számok és a besorolások ellenőrzött mintákon mértek, nem jogi megállapítások.</details>` +
+      `<details class="more"><summary>Mit jelentenek a szavak?</summary><b>Feladatfonal</b>: ugyanaz a feladat az egymást követő SZMSZ-ekben és minisztériumokban végigkövetve. ` +
+      `<b>Átadás</b>: egy feladat szövege kikerül egy minisztérium SZMSZ-éből, és legfeljebb 400 nap múlva egy másikéban megjelenik. ` +
+      `<b>COFOG-kód</b>: a kormányzati funkció 6 jegyű kódja (15/2019. (XII. 7.) PM rendelet).</details></div>`;
+    const showStart = () => { $('right').innerHTML = window.organoStartPage(mode); };
+    const setMode = m => { mode = m; selected = null; markTabs();
+      if (m === 'szmsz') return window.SzmszView.load(() => window.SzmszView.activate(query));
+      showStart(); renderTree(); };
+    $('tabCofog').onclick = () => setMode('cofog'); $('tabNace').onclick = () => setMode('nace'); $('tabSzmsz').onclick = () => setMode('szmsz');
+    $('navHome').onclick = e => { e.preventDefault(); query = ''; $('q').value = ''; setMode(mode === 'szmsz' ? 'cofog' : mode); };
+    // start tiles (external pages are plain links)
+    $('right').addEventListener('click', e => {
+      const t = e.target.closest('a[data-start]'); if (!t) return;
+      e.preventDefault(); e.stopImmediatePropagation();
+      const where = t.dataset.start;
+      if (where === 'P') { mode = 'szmsz'; selected = null; markTabs(); window.SzmszView.openKey('P'); return; }
+      setMode(where);
+    }, true);
+    showStart();
+    renderTree();
+  })();
+  </script>
+</body>
+</html>

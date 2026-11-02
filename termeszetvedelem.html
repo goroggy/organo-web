@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ORGANO – Magyar közigazgatási idősor</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#">ORGANO</a>
+    <div class="scope">Központi közigazgatás · 2004–</div>
+    <div class="baseline"><strong id="baseline-count">–</strong> mai központi szerv</div>
+  </header>
+
+  <main>
+    <section class="intro" aria-labelledby="page-title">
+      <div>
+        <p class="eyebrow">Közfeladat-alapú szervezettörténet</p>
+        <h1 id="page-title">Ki felel a természetvédelemért?</h1>
+        <p id="narrative" class="narrative" aria-live="polite">Az adatok betöltése…</p>
+      </div>
+      <div class="task-chip"><span>Közfeladat</span><strong>Természetvédelem</strong></div>
+    </section>
+
+    <nav class="timeline" aria-label="Időpont kiválasztása">
+      <div class="timeline-heading">
+        <div>
+          <p class="eyebrow">Események</p>
+          <strong>Természetvédelem</strong>
+        </div>
+        <label class="timeline-filter" for="snapshot-filter">
+          <span>Lista</span>
+          <select id="snapshot-filter">
+            <option value="all">Minden esemény</option>
+            <option value="structural">Csak szervezeti változások</option>
+          </select>
+        </label>
+      </div>
+      <div class="playback-controls" aria-label="A szervezettörténet lejátszása">
+        <button id="previous-snapshot" type="button" aria-label="Előző esemény">← <span>Előző</span></button>
+        <button id="playback-toggle" class="playback-toggle" type="button" aria-pressed="false">▶ Lejátszás</button>
+        <button id="next-snapshot" type="button" aria-label="Következő esemény"><span>Következő</span> →</button>
+        <output id="playback-progress" aria-live="polite">1 / 13</output>
+      </div>
+      <div id="snapshot-tabs" class="snapshot-tabs" role="tablist" aria-label="Dátumozott események"></div>
+    </nav>
+
+    <section class="toolbar" aria-label="Keresés és jelmagyarázat">
+      <label class="search-field" for="directory-search">
+        <span>Keresés a mai központi szervek között</span>
+        <input id="directory-search" type="search" autocomplete="off" placeholder="Név, PIR vagy szakágazati kód">
+      </label>
+      <div class="legend" aria-label="Változások jelmagyarázata">
+        <span><i class="dot persisted"></i> változatlan</span>
+        <span><i class="dot renamed"></i> átnevezve</span>
+        <span><i class="dot appeared"></i> új az útvonalon</span>
+        <span><i class="dash"></i> ellenőrzendő időeltérés</span>
+      </div>
+      <div id="search-results" class="search-results" hidden></div>
+    </section>
+
+    <div class="workspace">
+      <section class="diagram-panel" aria-labelledby="snapshot-title">
+        <div class="diagram-heading">
+          <div>
+            <p id="snapshot-date" class="eyebrow snapshot-date">–</p>
+            <h2 id="snapshot-title">–</h2>
+            <p id="story-narrative" class="story-narrative"></p>
+          </div>
+          <div id="changes" class="changes"></div>
+        </div>
+        <div id="graph" class="graph" aria-label="A természetvédelmi közfeladat szervezeti útvonala"></div>
+      </section>
+
+      <aside id="details" class="details" aria-labelledby="details-title" aria-live="polite">
+        <p class="eyebrow">Bizonyíték</p>
+        <h2 id="details-title">Válassz egy szervezetet vagy kapcsolatot</h2>
+        <div id="details-body" class="details-body"></div>
+      </aside>
+    </div>
+    <p id="live-status" class="sr-only" aria-live="polite"></p>
+  </main>
+  <script src="data/snapshots.js" defer></script>
+  <script src="playback.js" defer></script>
+  <script src="app.js" defer></script>
+</body>
+</html>

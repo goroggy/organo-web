@@ -1,0 +1,911 @@
+<!doctype html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ORGANO – Népegészségügyi szervezettörténet</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #102c27;
+      --muted: #62716d;
+      --green: #007b59;
+      --green-dark: #005d46;
+      --green-soft: #e2f3ed;
+      --aqua: #dceff2;
+      --orange: #c86c27;
+      --orange-soft: #f8e6d6;
+      --line: #cfddd8;
+      --panel: rgba(255, 255, 255, .94);
+      --shadow: 0 18px 45px rgba(21, 52, 45, .11);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: Georgia, "Times New Roman", serif;
+      background:
+        radial-gradient(circle at 84% 5%, rgba(140, 197, 184, .22), transparent 33rem),
+        linear-gradient(135deg, #f8faf7, #eef3ef 58%, #f6f2eb);
+    }
+
+    button { font: inherit; }
+
+    .shell {
+      display: grid;
+      grid-template-columns: 288px minmax(0, 1fr);
+      gap: 18px;
+      min-height: 100vh;
+      padding: 14px;
+    }
+
+    .event-rail,
+    .flow-stage {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .event-rail {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      padding: 18px 14px 14px;
+    }
+
+    .eyebrow {
+      margin: 0 0 7px;
+      color: var(--green);
+      font-family: system-ui, sans-serif;
+      font-size: .72rem;
+      font-weight: 850;
+      letter-spacing: .09em;
+      text-transform: uppercase;
+    }
+
+    #event-date { text-transform: none; }
+
+    .rail-title {
+      margin: 0 0 16px;
+      font-size: 1.2rem;
+    }
+
+    .playback-controls {
+      display: grid;
+      grid-template-columns: 42px 1fr 42px;
+      gap: 6px;
+      margin: 0 0 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .playback-controls button {
+      min-height: 37px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--ink);
+      background: #fff;
+      cursor: pointer;
+    }
+
+    .playback-controls button:hover { border-color: var(--green); }
+    #play-toggle {
+      color: #fff;
+      border-color: var(--orange);
+      background: var(--orange);
+      font-family: system-ui, sans-serif;
+      font-size: .74rem;
+      font-weight: 800;
+    }
+
+    #playback-progress {
+      grid-column: 1 / -1;
+      color: var(--muted);
+      font-family: system-ui, sans-serif;
+      font-size: .68rem;
+      font-weight: 750;
+      text-align: center;
+    }
+
+    #event-list {
+      display: grid;
+      gap: 7px;
+      min-height: 0;
+      overflow-y: auto;
+      padding-right: 3px;
+    }
+
+    .event-tab {
+      width: 100%;
+      padding: 11px 12px;
+      border: 0;
+      border-left: 3px solid var(--line);
+      border-radius: 9px;
+      color: var(--ink);
+      text-align: left;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .event-tab:hover { background: #f2f7f4; }
+    .event-tab[aria-selected="true"] {
+      border-left-color: var(--green);
+      background: var(--green-soft);
+      box-shadow: inset 0 0 0 1px rgba(0, 123, 89, .2);
+    }
+
+    .event-tab time {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--green-dark);
+      font-family: system-ui, sans-serif;
+      font-size: .73rem;
+      font-weight: 800;
+    }
+
+    .event-tab span {
+      display: block;
+      font-size: .83rem;
+      font-weight: 700;
+      line-height: 1.25;
+    }
+
+    .flow-stage {
+      min-width: 0;
+      overflow: hidden;
+      padding: 22px;
+    }
+
+    .stage-heading {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 20px;
+      align-items: start;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    #event-title {
+      margin: 0;
+      max-width: 960px;
+      font-size: clamp(1.55rem, 3vw, 2.5rem);
+      line-height: 1.08;
+    }
+
+    #event-narrative {
+      max-width: 940px;
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-family: system-ui, sans-serif;
+      font-size: .96rem;
+      line-height: 1.55;
+    }
+
+    .draft-badge {
+      padding: 7px 11px;
+      border-radius: 999px;
+      color: var(--green-dark);
+      background: var(--green-soft);
+      font-family: system-ui, sans-serif;
+      font-size: .72rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    #flow {
+      display: grid;
+      align-content: start;
+      min-height: 610px;
+      padding: 24px 0 4px;
+    }
+
+    .placeholder {
+      place-self: center;
+      color: var(--muted);
+      font-family: system-ui, sans-serif;
+    }
+
+    .flow-scene {
+      width: 100%;
+      min-width: 0;
+      font-family: system-ui, sans-serif;
+    }
+
+    .org-card {
+      min-width: 0;
+      padding: 11px 13px;
+      border: 1px solid var(--line);
+      border-left: 5px solid var(--green);
+      border-radius: 12px;
+      background: #fff;
+      box-shadow: 0 10px 24px rgba(21, 52, 45, .08);
+    }
+
+    .org-card small,
+    .org-card span {
+      display: block;
+      color: var(--muted);
+      font-size: .66rem;
+    }
+
+    .org-card strong {
+      display: block;
+      margin: 3px 0;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: .92rem;
+      line-height: 1.12;
+    }
+
+    .split-source {
+      width: min(440px, 62%);
+      margin: 0 auto;
+      border-left-color: var(--orange);
+    }
+
+    .split-trunk {
+      width: 2px;
+      height: 24px;
+      margin: 0 auto;
+      background: linear-gradient(var(--orange), var(--green));
+    }
+
+    .split-grid {
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 9px;
+      padding-top: 26px;
+    }
+
+    .split-grid::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 10%;
+      right: 10%;
+      height: 2px;
+      background: var(--green);
+      transform: scaleX(0);
+      transform-origin: center;
+      animation: branch-out .65s ease-out forwards;
+    }
+
+    .split-branch {
+      position: relative;
+      display: grid;
+      grid-template-rows: 47px auto;
+      align-items: end;
+      min-width: 0;
+      padding-top: 2px;
+    }
+
+    .split-branch::before {
+      content: "";
+      position: absolute;
+      top: -26px;
+      left: 50%;
+      width: 2px;
+      height: 64px;
+      background: var(--green);
+      transform: scaleY(0);
+      transform-origin: top;
+      animation: grow-down .42s calc(.22s + var(--i) * .08s) ease-out forwards;
+    }
+
+    .task-fish {
+      z-index: 1;
+      justify-self: center;
+      max-width: 96%;
+      padding: 5px 8px;
+      border-radius: 999px 999px 999px 6px;
+      color: var(--green-dark);
+      background: var(--green-soft);
+      font-size: clamp(.58rem, .75vw, .7rem);
+      font-weight: 750;
+      line-height: 1.08;
+      text-align: center;
+      opacity: 0;
+      transform: translateY(-20px);
+      animation: swim-down .58s calc(.4s + var(--i) * .09s) ease-out forwards;
+    }
+
+    .split-target-card {
+      align-self: stretch;
+      min-height: 88px;
+      padding: 10px 9px;
+      border: 1px solid var(--line);
+      border-top: 4px solid var(--green);
+      border-radius: 11px;
+      background: #fff;
+      box-shadow: 0 8px 18px rgba(21, 52, 45, .07);
+    }
+
+    .split-target-card small {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--muted);
+      font-size: .61rem;
+      font-weight: 750;
+      letter-spacing: .03em;
+      text-transform: uppercase;
+    }
+
+    .split-target {
+      display: block;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(.73rem, 1vw, .9rem);
+      line-height: 1.12;
+    }
+
+    .merge-lane {
+      display: grid;
+      grid-template-columns: 1fr 72px 1fr 72px 1.15fr;
+      gap: 10px;
+      align-items: center;
+      margin-top: 26px;
+      padding: 16px;
+      border-radius: 14px;
+      background: linear-gradient(90deg, rgba(220, 239, 242, .7), rgba(226, 243, 237, .72));
+    }
+
+    .merge-arrow {
+      position: relative;
+      height: 2px;
+      background: var(--green);
+    }
+
+    .merge-arrow::after {
+      content: "";
+      position: absolute;
+      top: -4px;
+      right: -1px;
+      width: 8px;
+      height: 8px;
+      border-top: 2px solid var(--green);
+      border-right: 2px solid var(--green);
+      transform: rotate(45deg);
+    }
+
+    .merge-label {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--green-dark);
+      font-size: .67rem;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .parallel-scene {
+      display: grid;
+      gap: 20px;
+      align-content: center;
+      min-height: 530px;
+    }
+
+    .scene-note {
+      justify-self: center;
+      max-width: 760px;
+      margin: 0;
+      padding: 8px 12px;
+      border-radius: 999px;
+      color: var(--muted);
+      background: rgba(255, 255, 255, .78);
+      font-size: .74rem;
+      text-align: center;
+    }
+
+    .lane-grid {
+      display: grid;
+      grid-template-columns: repeat(var(--columns, 3), minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .lane {
+      display: grid;
+      gap: 10px;
+      align-content: start;
+      padding: 16px;
+      border: 1px solid rgba(207, 221, 216, .85);
+      border-radius: 16px;
+      background: linear-gradient(155deg, rgba(255, 255, 255, .95), rgba(226, 243, 237, .5));
+    }
+
+    .lane.pharma { background: linear-gradient(155deg, #fff, rgba(248, 230, 214, .52)); }
+    .lane.pharma .org-card { border-left-color: var(--orange); }
+
+    .lane-title {
+      margin: 0;
+      color: var(--muted);
+      font-size: .68rem;
+      font-weight: 850;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    .packets {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .packet {
+      display: inline-flex;
+      align-items: center;
+      min-height: 25px;
+      padding: 4px 8px;
+      border: 1px solid rgba(0, 123, 89, .16);
+      border-radius: 999px 999px 999px 7px;
+      color: var(--green-dark);
+      background: var(--green-soft);
+      font-size: .66rem;
+      font-weight: 750;
+      line-height: 1.05;
+      animation: packet-arrive .48s ease-out both;
+    }
+
+    .packet.pharma {
+      border-color: rgba(200, 108, 39, .2);
+      color: #864311;
+      background: var(--orange-soft);
+    }
+
+    .transition-scene,
+    .convergence-scene {
+      display: grid;
+      align-content: center;
+      min-height: 530px;
+    }
+
+    .transition-main {
+      display: grid;
+      grid-template-columns: minmax(190px, 1fr) 190px minmax(250px, 1.2fr);
+      gap: 18px;
+      align-items: center;
+      max-width: 980px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .river {
+      position: relative;
+      display: grid;
+      gap: 7px;
+      align-content: center;
+      min-height: 116px;
+      padding: 10px 0;
+    }
+
+    .river::before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 3px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--orange), var(--green));
+      transform: scaleX(0);
+      transform-origin: left;
+      animation: branch-out .7s ease-out forwards;
+    }
+
+    .river .packet {
+      z-index: 1;
+      justify-self: center;
+      opacity: 0;
+      transform: translateX(-45px);
+      animation: swim-across .7s calc(var(--i, 0) * .1s + .2s) ease-out forwards;
+    }
+
+    .context-row {
+      display: grid;
+      grid-template-columns: repeat(var(--columns, 3), minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 34px;
+      padding-top: 18px;
+      border-top: 1px dashed var(--line);
+    }
+
+    .context-row .org-card { box-shadow: none; opacity: .82; }
+
+    .merge-sources {
+      display: grid;
+      gap: 12px;
+    }
+
+    .merge-source.pharma { border-left-color: var(--orange); }
+
+    .merge-river {
+      position: relative;
+      display: grid;
+      gap: 6px;
+      align-content: center;
+      min-height: 210px;
+      padding: 15px 0;
+    }
+
+    .merge-river::before,
+    .merge-river::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      border-radius: 999px;
+      background: var(--green);
+      transform-origin: left;
+      animation: branch-out .65s ease-out forwards;
+    }
+
+    .merge-river::before { top: 31%; transform: rotate(10deg) scaleX(0); }
+    .merge-river::after { bottom: 31%; background: var(--orange); transform: rotate(-10deg) scaleX(0); }
+
+    .merge-river .packet {
+      z-index: 1;
+      justify-self: center;
+      opacity: 0;
+      transform: translateX(-40px);
+      animation: swim-across .65s calc(var(--i, 0) * .09s + .25s) ease-out forwards;
+    }
+
+    .merge-target {
+      border-left-width: 7px;
+      background: linear-gradient(135deg, #fff, var(--green-soft));
+    }
+
+    .conflict-note {
+      max-width: 760px;
+      margin: 28px auto 0;
+      padding: 13px 15px;
+      border: 1px dashed #ba7e44;
+      border-radius: 12px;
+      color: #735031;
+      background: #fff9f1;
+      font-size: .76rem;
+      line-height: 1.4;
+    }
+
+    @keyframes packet-arrive { from { opacity: 0; transform: translateY(-9px); } }
+    @keyframes swim-across { to { opacity: 1; transform: translateX(0); } }
+
+    @keyframes branch-out { to { transform: scaleX(1); } }
+    @keyframes grow-down { to { transform: scaleY(1); } }
+    @keyframes swim-down { to { opacity: 1; transform: translateY(0); } }
+
+    @media (max-width: 760px) {
+      .shell { grid-template-columns: 1fr; }
+      .event-rail { max-height: 300px; }
+      .stage-heading { grid-template-columns: 1fr; }
+      .draft-badge { justify-self: start; }
+      .split-grid { grid-template-columns: 1fr; padding-top: 0; }
+      .split-grid::before, .split-branch::before { display: none; }
+      .split-branch { grid-template-columns: 120px 1fr; grid-template-rows: auto; align-items: center; }
+      .task-fish { transform: translateX(-20px); }
+      .merge-lane { grid-template-columns: 1fr; }
+      .merge-arrow { width: 2px; height: 24px; margin: 0 auto; }
+      .merge-arrow::after { top: auto; right: -4px; bottom: 0; transform: rotate(135deg); }
+      .lane-grid, .context-row { grid-template-columns: 1fr; }
+      .transition-main { grid-template-columns: 1fr; }
+      .river { min-height: 80px; }
+      .river::before { top: 0; bottom: 0; left: 50%; right: auto; width: 3px; height: 100%; transform: scaleY(0); transform-origin: top; }
+      .merge-river { min-height: 130px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <nav class="event-rail" aria-label="Népegészségügyi események">
+      <p class="eyebrow">Külön kísérleti nézet</p>
+      <h1 class="rail-title">Népegészségügy</h1>
+      <div class="playback-controls" aria-label="A szervezettörténet lejátszása">
+        <button id="previous-event" type="button" aria-label="Előző esemény">←</button>
+        <button id="play-toggle" type="button" aria-pressed="false">▶ Lejátszás</button>
+        <button id="next-event" type="button" aria-label="Következő esemény">→</button>
+        <output id="playback-progress" aria-live="polite">1 / 7</output>
+      </div>
+      <div id="event-list" role="tablist" aria-label="Dátumozott események"></div>
+    </nav>
+
+    <section class="flow-stage" aria-labelledby="event-title">
+      <header class="stage-heading">
+        <div>
+          <p id="event-date" class="eyebrow" aria-live="polite"></p>
+          <h2 id="event-title"></h2>
+          <p id="event-narrative" aria-live="polite"></p>
+        </div>
+        <span class="draft-badge">Önálló flow-vázlat</span>
+      </header>
+      <div id="flow" aria-label="A népegészségügyi szervezetek és feladatok időbeli folyamata">
+        <p class="placeholder">A folyamatábra helye</p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const events = [
+      {
+        date: "2004-05-01",
+        displayDate: "2004. május 1.",
+        title: "Külön ágak az uniós belépés napján",
+        narrative: "A gyógyszerészeti hatósági feladatokat az önálló OGYI viszi; a népegészségügyi és járványügyi ág az ÁNTSZ központi rendszere és országos intézetei körül szerveződik."
+      },
+      {
+        date: "2011-05-01",
+        displayDate: "2011. május 1.",
+        title: "Az OGYI beolvad a GYEMSZI-be",
+        narrative: "Az önálló OGYI megszűnik, de a gyógyszerészeti feladatcsomag GYEMSZI OGYI Főigazgatóságként tovább él."
+      },
+      {
+        date: "2015-03-01",
+        displayDate: "2015. március 1.",
+        title: "Létrejön az OGYÉI: több feladatfolyam találkozik",
+        narrative: "Az OÉTI névmódosulásával, valamint a GYEMSZI gyógyszerészeti, eszközminősítő és technológiaértékelési egységeinek beolvadásával létrejön az OGYÉI."
+      },
+      {
+        date: "2017-03-31",
+        displayDate: "2017. március 31.",
+        title: "Az OTH többfelé válik, az OEK az OKK-ba olvad",
+        narrative: "Az OTH feladatai több célhoz kerülnek. Ugyanezen a napon az OEK beolvad az OKK-ba, amely OKI néven folytatódik."
+      },
+      {
+        date: "2018-10-01",
+        displayDate: "2018. október 1.",
+        title: "Az OKI-ból NNK lesz",
+        narrative: "A 598789-es intézmény NNK néven folytatódik, és az EMMI tisztifőorvosi egységeinek feladatai visszakerülnek a központba."
+      },
+      {
+        date: "2023-08-01",
+        displayDate: "2023. augusztus 1.",
+        title: "Az OGYÉI beolvad az NNK-ba: létrejön az NNGYK",
+        narrative: "Az NNK NNGYK néven folytatódik; az OGYÉI beolvadással megszűnik, feladatcsomagjai az egységes központba kerülnek."
+      },
+      {
+        date: "2026-09-01",
+        displayDate: "2026. szeptember 1.",
+        title: "Az NNGYK továbbra is egységes szervezet",
+        narrative: "Az aktuális kontrollok nem bizonyítanak szétválást. Az Országos Népegészségügyi Intézet megnevezés egyelőre forrásütközés, nem szervezeti esemény."
+      }
+    ];
+
+    let selectedIndex = 0;
+    let playTimer = null;
+    let isPlaying = false;
+
+    function renderEventList() {
+      const list = document.getElementById("event-list");
+      list.replaceChildren(...events.map((event, index) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "event-tab";
+        button.role = "tab";
+        button.setAttribute("aria-label", event.date);
+        button.setAttribute("aria-selected", String(index === selectedIndex));
+        button.innerHTML = `<time datetime="${event.date}">${event.displayDate}</time><span>${event.title}</span>`;
+        button.addEventListener("click", () => selectEvent(index));
+        return button;
+      }));
+    }
+
+    function selectEvent(index, keepPlaying = false) {
+      if (!keepPlaying) pausePlayback();
+      selectedIndex = Math.max(0, Math.min(index, events.length - 1));
+      const event = events[selectedIndex];
+      document.getElementById("event-date").textContent = event.displayDate;
+      document.getElementById("event-title").textContent = event.title;
+      document.getElementById("event-narrative").textContent = event.narrative;
+      document.getElementById("playback-progress").textContent = `${selectedIndex + 1} / ${events.length}`;
+      renderEventList();
+      renderFlow(event);
+    }
+
+    function updatePlayButton() {
+      const button = document.getElementById("play-toggle");
+      button.setAttribute("aria-pressed", String(isPlaying));
+      button.textContent = isPlaying ? "Ⅱ Szünet" : "▶ Lejátszás";
+    }
+
+    function pausePlayback() {
+      if (playTimer !== null) clearTimeout(playTimer);
+      playTimer = null;
+      isPlaying = false;
+      updatePlayButton();
+    }
+
+    function scheduleNext() {
+      if (!isPlaying) return;
+      if (selectedIndex >= events.length - 1) {
+        pausePlayback();
+        return;
+      }
+      playTimer = setTimeout(() => {
+        playTimer = null;
+        selectEvent(selectedIndex + 1, true);
+        scheduleNext();
+      }, 1200);
+    }
+
+    function togglePlayback() {
+      if (isPlaying) {
+        pausePlayback();
+        return;
+      }
+      if (selectedIndex >= events.length - 1) selectEvent(0, true);
+      isPlaying = true;
+      updatePlayButton();
+      scheduleNext();
+    }
+
+    function orgCard(name, meta, className = "") {
+      return `<div class="org-card ${className}"><small>${meta}</small><strong>${name}</strong></div>`;
+    }
+
+    function packet(label, className = "", index = 0) {
+      return `<span class="packet ${className}" style="--i:${index}">${label}</span>`;
+    }
+
+    function renderFlow(event) {
+      const flow = document.getElementById("flow");
+      if (event.date === "2004-05-01") {
+        flow.innerHTML = `
+          <div class="flow-scene parallel-scene">
+            <p class="scene-note">Két külön intézményi ág; a feladatok már ekkor is több országos intézet között oszlanak meg.</p>
+            <div class="lane-grid" style="--columns:2">
+              <section class="lane">
+                <p class="lane-title">ÁNTSZ · népegészségügyi ág</p>
+                ${orgCard("Országos Tisztifőorvosi Hivatal", "ÁNTSZ központi hivatal")}
+                <div class="packets">${packet("népegészségügy")}${packet("járványügy", "", 1)}${packet("munkaegészségügy", "", 2)}</div>
+              </section>
+              <section class="lane pharma">
+                <p class="lane-title">önálló gyógyszerészeti ág</p>
+                ${orgCard("Országos Gyógyszerészeti Intézet", "PIR 310039")}
+                <div class="packets">${packet("gyógyszerészeti hatóság", "pharma")}</div>
+              </section>
+            </div>
+          </div>`;
+        return;
+      }
+
+      if (event.date === "2011-05-01") {
+        flow.innerHTML = `
+          <div class="flow-scene transition-scene">
+            <div class="transition-main">
+              ${orgCard("Országos Gyógyszerészeti Intézet", "PIR 310039 · megszűnő önálló szerv")}
+              <div class="river">${packet("gyógyszerészeti hatóság", "pharma", 0)}</div>
+              ${orgCard("Gyógyszerészeti és Egészségügyi Minőség- és Szervezetfejlesztési Intézet", "PIR 324689 · OGYI Főigazgatóság")}
+            </div>
+            <div class="context-row" style="--columns:2">
+              ${orgCard("Országos Tisztifőorvosi Hivatal", "párhuzamos népegészségügyi ág")}
+              ${orgCard("Országos Élelmezés- és Táplálkozástudományi Intézet", "párhuzamos táplálkozás-egészségügyi ág")}
+            </div>
+          </div>`;
+        return;
+      }
+
+      if (event.date === "2015-03-01") {
+        flow.innerHTML = `
+          <div class="flow-scene convergence-scene">
+            <div class="transition-main">
+              <div class="merge-sources">
+                ${orgCard("Országos Élelmezés- és Táplálkozástudományi Intézet", "PIR 598185 · névmódosul")}
+                ${orgCard("GYEMSZI szakmai egységei", "PIR 324689 · három átadó egység", "pharma")}
+              </div>
+              <div class="merge-river">
+                ${packet("táplálkozás-egészségügy", "", 0)}
+                ${packet("gyógyszerészeti hatóság", "pharma", 1)}
+                ${packet("orvostechnika", "pharma", 2)}
+                ${packet("technológiaértékelés", "pharma", 3)}
+              </div>
+              ${orgCard("Országos Gyógyszerészeti és Élelmezés-egészségügyi Intézet", "PIR 598185 · új név és kibővült feladatkör", "merge-target")}
+            </div>
+            <div class="context-row" style="--columns:3">
+              ${orgCard("Országos Tisztifőorvosi Hivatal", "népegészségügyi koordináció")}
+              ${orgCard("Országos Epidemiológiai Központ", "PIR 630050 · járványügy")}
+              ${orgCard("Országos Közegészségügyi Központ", "PIR 598789 · közegészségügy")}
+            </div>
+          </div>`;
+        return;
+      }
+
+      if (event.date === "2018-10-01") {
+        flow.innerHTML = `
+          <div class="flow-scene convergence-scene">
+            <div class="transition-main">
+              <div class="merge-sources">
+                ${orgCard("Országos Közegészségügyi Intézet", "PIR 598789 · névváltás")}
+                ${orgCard("EMMI tisztifőorvosi egységei", "beolvadásos kiválás")}
+              </div>
+              <div class="merge-river">
+                ${packet("népegészségügy", "", 0)}
+                ${packet("járványügy", "", 1)}
+                ${packet("országos tisztifőorvosi feladatok", "", 2)}
+              </div>
+              ${orgCard("Nemzeti Népegészségügyi Központ", "PIR 598789 · új név", "merge-target")}
+            </div>
+            <div class="context-row" style="--columns:1">
+              ${orgCard("Országos Gyógyszerészeti és Élelmezés-egészségügyi Intézet", "PIR 598185 · továbbra is külön ág", "pharma")}
+            </div>
+          </div>`;
+        return;
+      }
+
+      if (event.date === "2023-08-01") {
+        flow.innerHTML = `
+          <div class="flow-scene convergence-scene">
+            <div class="transition-main">
+              <div class="merge-sources">
+                ${orgCard("Nemzeti Népegészségügyi Központ", "PIR 598789 · tovább él", "merge-source")}
+                ${orgCard("Országos Gyógyszerészeti és Élelmezés-egészségügyi Intézet", "PIR 598185 · beolvad", "merge-source pharma")}
+              </div>
+              <div class="merge-river">
+                ${packet("népegészségügy", "", 0)}
+                ${packet("járványügy", "", 1)}
+                ${packet("gyógyszerészeti hatóság", "pharma", 2)}
+                ${packet("táplálkozás-egészségügy", "pharma", 3)}
+                ${packet("orvostechnika · technológiaértékelés", "pharma", 4)}
+              </div>
+              ${orgCard("Nemzeti Népegészségügyi és Gyógyszerészeti Központ", "PIR 598789 · egységes központ", "merge-target")}
+            </div>
+          </div>`;
+        return;
+      }
+
+      if (event.date === "2026-09-01") {
+        flow.innerHTML = `
+          <div class="flow-scene transition-scene">
+            <div class="transition-main" style="grid-template-columns:minmax(0,1fr)">
+              <div>
+                ${orgCard("Nemzeti Népegészségügyi és Gyógyszerészeti Központ", "PIR 598789 · jogilag egységes szervezet", "merge-target")}
+                <div class="packets" style="justify-content:center;margin-top:14px">
+                  ${packet("népegészségügy")}${packet("járványügy", "", 1)}${packet("gyógyszerészeti hatóság", "pharma", 2)}${packet("táplálkozás-egészségügy", "pharma", 3)}
+                </div>
+                <p class="conflict-note"><strong>Ellenőrzendő szöveg:</strong> a 2026-os EüM SZMSZ egyes feladatleírásai „Országos Népegészségügyi Intézetet” említenek, de a háttérintézményi táblában továbbra is az egységes NNGYK szerepel. Ezért nincs külön szervezeti kártya.</p>
+              </div>
+            </div>
+          </div>`;
+        return;
+      }
+
+      const branches = [
+        ["általános jogutódlás", "Emberi Erőforrások Minisztériuma", "általános jogutód"],
+        ["EU-projektek · munkaegészségügy", "Országos Közegészségügyi Intézet", "feladat szerinti jogutód"],
+        ["praxisprogramok", "Állami Egészségügyi Ellátó Központ", "feladat szerinti jogutód"],
+        ["fővárosi hatósági feladatok", "Budapest Főváros Kormányhivatala", "közfeladat-átvevő"],
+        ["megyei hatósági feladatok", "Megyei kormányhivatalok", "közfeladat-átvevők"]
+      ];
+
+      flow.innerHTML = `
+        <div class="flow-scene split-scene">
+          ${orgCard("Országos Tisztifőorvosi Hivatal", "PIR 329530 · beolvadásos különválás", "split-source")}
+          <div class="split-trunk" aria-hidden="true"></div>
+          <div class="split-grid">
+            ${branches.map(([task, target, role], index) => `
+              <article class="split-branch" style="--i:${index}">
+                <span class="task-fish">${task}</span>
+                <div class="split-target-card"><small>${role}</small><strong class="split-target">${target}</strong></div>
+              </article>`).join("")}
+          </div>
+          <div class="merge-lane" aria-label="Az epidemiológiai ág párhuzamos egyesülése">
+            ${orgCard("Országos Epidemiológiai Központ", "PIR 630050 · beolvad")}
+            <span class="merge-arrow" aria-hidden="true"></span>
+            ${orgCard("Országos Közegészségügyi Központ", "PIR 598789 · befogadó")}
+            <span class="merge-arrow" aria-hidden="true"></span>
+            <div>${orgCard("Országos Közegészségügyi Intézet", "PIR 598789 · új név")}<span class="merge-label">járványügy + közegészségügy</span></div>
+          </div>
+        </div>`;
+    }
+
+    document.getElementById("previous-event").addEventListener("click", () => selectEvent(selectedIndex - 1));
+    document.getElementById("next-event").addEventListener("click", () => selectEvent(selectedIndex + 1));
+    document.getElementById("play-toggle").addEventListener("click", togglePlayback);
+    selectEvent(0);
+  </script>
+</body>
+</html>

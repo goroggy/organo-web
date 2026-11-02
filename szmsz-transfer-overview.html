@@ -1,0 +1,1190 @@
+<!doctype html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Feladatátadások</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #102c29;
+      --muted: #62736f;
+      --paper: #f3f7f4;
+      --panel: rgba(255, 255, 255, .9);
+      --line: #cad8d2;
+      --green: #087a5b;
+      --green-dark: #075a47;
+      --orange: #ca6f27;
+      --orange-pale: #f6e4d3;
+      --blue: #3f79a9;
+      --violet: #7366a8;
+      --teal: #1c8d91;
+      --shadow: 0 18px 50px rgba(22, 53, 45, .11);
+      font-family: Inter, Aptos, "Segoe UI", system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 86% 4%, rgba(202, 111, 39, .11), transparent 24rem),
+        radial-gradient(circle at 8% 92%, rgba(8, 122, 91, .11), transparent 30rem),
+        var(--paper);
+    }
+
+    button, a { font: inherit; }
+
+    .page-shell {
+      width: min(1840px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 14px 0 16px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 9px;
+    }
+
+    .eyebrow {
+      margin: 0 0 7px;
+      color: var(--green);
+      font-size: .74rem;
+      font-weight: 850;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      max-width: none;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(1.45rem, 1.7vw, 2rem);
+      line-height: 1.08;
+      letter-spacing: -.025em;
+      white-space: nowrap;
+    }
+
+    .detail-link {
+      flex: none;
+      color: var(--green-dark);
+      font-size: .88rem;
+      font-weight: 760;
+      text-decoration: none;
+      border-bottom: 1px solid currentColor;
+    }
+
+    .map-shell {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: minmax(210px, auto) minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 16px;
+      padding: 10px 18px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, .75);
+    }
+
+    .segmented {
+      display: inline-flex;
+      padding: 4px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #eef4f0;
+    }
+
+    .segmented button,
+    .motion-toggle {
+      border: 0;
+      border-radius: 999px;
+      color: var(--ink);
+      background: transparent;
+      cursor: pointer;
+      font-size: .82rem;
+      font-weight: 780;
+    }
+
+    .segmented button { padding: 8px 13px; }
+
+    .segmented button[aria-pressed="true"] {
+      color: white;
+      background: var(--green);
+      box-shadow: 0 3px 10px rgba(8, 122, 91, .23);
+    }
+
+    #mode-summary {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: .72rem;
+      line-height: 1.25;
+    }
+
+    #mode-summary strong { color: var(--ink); }
+
+    .motion-toggle {
+      padding: 8px 13px;
+      border: 1px solid var(--line);
+      white-space: nowrap;
+    }
+
+    .playback-controls {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .speed-control {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin-right: 3px;
+      color: var(--muted);
+      font-size: .7rem;
+      font-weight: 760;
+    }
+
+    .speed-control select {
+      padding: 7px 24px 7px 9px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--ink);
+      background: white;
+      cursor: pointer;
+      font-size: .78rem;
+      font-weight: 760;
+    }
+
+    .step-button {
+      width: 34px;
+      height: 34px;
+      padding: 0;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      color: var(--ink);
+      background: white;
+      cursor: pointer;
+      font-weight: 850;
+    }
+
+    .motion-toggle[aria-pressed="true"] {
+      color: #8a481a;
+      border-color: #e2b88f;
+      background: var(--orange-pale);
+    }
+
+    #timeline {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 8px;
+      padding: 12px 18px 0;
+    }
+
+    #timeline button {
+      position: relative;
+      padding: 5px 3px 11px;
+      border: 0;
+      color: var(--muted);
+      background: transparent;
+      cursor: pointer;
+      font-size: .78rem;
+      font-weight: 800;
+    }
+
+    #timeline button::after {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      height: 2px;
+      border-radius: 2px;
+      background: var(--line);
+      content: "";
+    }
+
+    #timeline button:hover,
+    #timeline button[aria-pressed="true"] { color: var(--green-dark); }
+
+    #timeline button[aria-pressed="true"]::after { background: var(--green); }
+
+    #flow-map {
+      position: relative;
+      padding: 4px 12px 0;
+    }
+
+    #flow-map svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      max-height: calc(100vh - 240px);
+      min-height: 470px;
+    }
+
+    .time-guide {
+      stroke: #dce6e1;
+      stroke-width: 1;
+      stroke-dasharray: 3 9;
+    }
+
+    #now-line {
+      stroke: #cf2f31;
+      stroke-width: 3;
+      filter: drop-shadow(0 0 5px rgba(207, 47, 49, .3));
+      transition: x1 .55s cubic-bezier(.2,.75,.25,1), x2 .55s cubic-bezier(.2,.75,.25,1);
+    }
+
+    #now-label {
+      fill: #b21f24;
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: .1em;
+      transition: x .55s cubic-bezier(.2,.75,.25,1);
+    }
+
+    .flow-ribbon {
+      fill: none;
+      stroke: var(--green);
+      stroke-width: var(--ribbon-width, 15);
+      stroke-linecap: round;
+      opacity: .38;
+      transition: opacity .25s ease, stroke .25s ease, stroke-width .25s ease;
+    }
+
+    #flow-map[data-mode="tasks"] .flow-ribbon { opacity: .55; }
+    #flow-map[data-mode="tasks"] .flow-ribbon[data-task="pharma"] { stroke: var(--orange); }
+    #flow-map[data-mode="tasks"] .flow-ribbon[data-task="nutrition"] { stroke: var(--violet); }
+    #flow-map[data-mode="tasks"] .flow-ribbon[data-task="epidemiology"] { stroke: var(--blue); }
+    #flow-map[data-mode="tasks"] .flow-ribbon[data-task="territorial"] { stroke: #7d8368; }
+    #flow-map[data-mode="tasks"] .flow-ribbon[data-task="primary"] { stroke: #a15f7a; }
+    #flow-map[data-mode="tasks"] .flow-ribbon[data-task="public"] { stroke: var(--teal); }
+
+    .flow-pulse {
+      fill: none;
+      stroke: white;
+      stroke-width: 3.2;
+      stroke-linecap: round;
+      stroke-dasharray: 1 31;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #flow-map[data-motion="true"] .flow-pulse {
+      opacity: .9;
+      animation: travel 1.55s linear infinite;
+    }
+
+    @keyframes travel { to { stroke-dashoffset: -64; } }
+
+    .org-node { cursor: pointer; }
+
+    .org-node rect {
+      fill: rgba(255,255,255,.96);
+      stroke: #b8ccc4;
+      stroke-width: 1.2;
+      filter: drop-shadow(0 5px 8px rgba(22, 53, 45, .12));
+      transition: stroke .2s ease, stroke-width .2s ease, opacity .2s ease;
+    }
+
+    .org-node.context rect {
+      fill: #f6f3ed;
+      stroke: #d7caba;
+    }
+
+    .org-node.merged rect {
+      fill: #e6f5ee;
+      stroke: var(--green);
+      stroke-width: 2;
+    }
+
+    .org-node:hover rect,
+    .org-node:focus rect {
+      stroke: var(--orange);
+      stroke-width: 2.5;
+      outline: none;
+    }
+
+    .org-name {
+      margin: 0;
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 790;
+      line-height: 1.15;
+    }
+
+    .org-meta {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 650;
+    }
+
+    .event-focus .flow-ribbon { opacity: .1; }
+    .event-focus .flow-ribbon.is-focused { opacity: .82; stroke-width: calc(var(--ribbon-width, 15) + 3px); }
+    .event-focus .org-node:not(.is-focused) rect { opacity: .42; }
+
+    #flow-map[data-mode="tasks"] .org-node rect {
+      opacity: .18 !important;
+      filter: grayscale(.65) drop-shadow(0 3px 5px rgba(22, 53, 45, .08));
+    }
+
+    #flow-map[data-mode="tasks"] .org-node foreignObject { opacity: .22; }
+    #flow-map[data-mode="tasks"] .org-node.is-focused rect { opacity: .25 !important; }
+    #flow-map[data-mode="tasks"].event-focus .flow-ribbon { opacity: .08; }
+    #flow-map[data-mode="tasks"].event-focus .flow-ribbon.is-focused { opacity: .94; }
+
+    #flow-map[data-mode="tasks"][data-task-story="playing"].event-focus .flow-ribbon.is-focused { opacity: .16; }
+    #flow-map[data-mode="tasks"][data-task-story="playing"].event-focus .flow-ribbon.is-task-current {
+      opacity: 1;
+      stroke-width: calc(var(--ribbon-width, 15) + 5px);
+    }
+
+    .task-label {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .18s ease;
+    }
+
+    #flow-map[data-mode="tasks"].event-focus .task-label.is-focused { opacity: .98; }
+    #flow-map[data-mode="tasks"][data-task-story="playing"].event-focus .task-label.is-focused { opacity: 0; }
+    #flow-map[data-mode="tasks"][data-task-story="playing"].event-focus .task-label.is-task-current { opacity: .98; }
+    #flow-map[data-mode="tasks"][data-task-story="summary"].event-focus .task-label.is-focused { opacity: 0; }
+
+    .task-label-shell {
+      transform-box: fill-box;
+      transform-origin: center;
+    }
+
+    .task-label.is-focused .task-label-shell {
+      animation: task-label-arrive .64s var(--label-delay, 0s) cubic-bezier(.18,.8,.24,1) both;
+    }
+
+    .task-label rect {
+      fill: var(--teal);
+      stroke: rgba(255,255,255,.92);
+      stroke-width: 1.5;
+      filter: drop-shadow(0 4px 7px rgba(16, 44, 41, .28));
+    }
+
+    .task-label[data-task="pharma"] rect { fill: var(--orange); }
+    .task-label[data-task="nutrition"] rect { fill: var(--violet); }
+    .task-label[data-task="epidemiology"] rect { fill: var(--blue); }
+    .task-label[data-task="territorial"] rect { fill: #70765c; }
+    .task-label[data-task="primary"] rect { fill: #a15f7a; }
+
+    .task-label text {
+      fill: white;
+      font-size: 16px;
+      font-weight: 820;
+      letter-spacing: .01em;
+      text-anchor: middle;
+      dominant-baseline: middle;
+    }
+
+    @keyframes task-label-arrive {
+      from { opacity: 0; transform: translateX(-18px) scale(.92); }
+      to { opacity: 1; transform: translateX(0) scale(1); }
+    }
+
+    .legend {
+      display: none;
+      flex-wrap: wrap;
+      gap: 4px 12px;
+      padding: 6px 0 0;
+      color: var(--muted);
+      font-size: .68rem;
+    }
+
+    .map-shell:has(#flow-map[data-mode="tasks"]) .legend { display: flex; }
+
+    .legend span { display: inline-flex; align-items: center; gap: 6px; }
+    .legend i { width: 20px; height: 5px; border-radius: 5px; background: var(--swatch); }
+
+    .event-card {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(190px, auto) 1fr auto;
+      gap: 12px;
+      align-items: baseline;
+      min-height: 0;
+      padding: 5px 10px;
+      border: 0;
+      border-left: 3px solid #b1123b;
+      border-radius: 4px 10px 10px 4px;
+      background: #fff0f3;
+    }
+
+    .event-card strong {
+      color: #b1123b;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1rem;
+      font-weight: 850;
+    }
+
+    .event-card p {
+      margin: 0;
+      color: #7f1d32;
+      font-size: .82rem;
+      font-weight: 680;
+      line-height: 1.35;
+    }
+
+    .task-story-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 320px;
+      max-width: 390px;
+      min-height: 38px;
+      padding: 6px 12px;
+      border: 1px solid rgba(177, 18, 59, .22);
+      border-radius: 18px;
+      color: #7f1d32;
+      background: rgba(255,255,255,.72);
+      font-size: .94rem;
+      font-weight: 800;
+      line-height: 1.18;
+    }
+
+    .task-story-status[hidden] { display: none; }
+    #task-story-count {
+      flex: none;
+      color: #b1123b;
+      font-size: .78rem;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    #task-story-label {
+      display: -webkit-box;
+      overflow: hidden;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+    }
+
+    .task-summary { position: relative; }
+    .task-summary[hidden] { display: none; }
+
+    .task-summary-toggle {
+      padding: 6px 11px;
+      border: 1px solid rgba(177, 18, 59, .28);
+      border-radius: 999px;
+      color: #7f1d32;
+      background: white;
+      cursor: pointer;
+      font-size: .72rem;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+
+    .task-summary-toggle::after { margin-left: 7px; content: "⌄"; }
+    .task-summary-toggle[aria-expanded="true"]::after { content: "⌃"; }
+    .task-summary-toggle:disabled { cursor: default; opacity: .72; }
+
+    .task-summary-panel {
+      position: absolute;
+      z-index: 20;
+      top: calc(100% + 9px);
+      right: 0;
+      width: min(720px, calc(100vw - 70px));
+      max-height: 360px;
+      padding: 10px;
+      overflow: auto;
+      border: 1px solid #d9b3bd;
+      border-radius: 14px;
+      background: rgba(255,255,255,.98);
+      box-shadow: 0 18px 45px rgba(61, 24, 34, .22);
+    }
+
+    .task-summary-panel[hidden] { display: none; }
+
+    .task-summary-item {
+      display: grid;
+      grid-template-columns: minmax(180px, 1fr) minmax(230px, 1.25fr);
+      gap: 3px 14px;
+      padding: 8px 9px;
+      border-bottom: 1px solid #f0dce1;
+    }
+
+    .task-summary-item:last-child { border-bottom: 0; }
+    .task-summary-item strong { font-family: inherit; font-size: .76rem; }
+    .task-summary-route { color: var(--ink); font-size: .73rem; font-weight: 720; }
+    .task-summary-evidence { grid-column: 1 / -1; color: var(--muted); font-size: .68rem; }
+    .task-summary-evidence a { color: #8f1736; font-weight: 780; }
+
+    .event-card.is-entering strong {
+      animation: caption-in .48s cubic-bezier(.2,.8,.25,1) both;
+    }
+
+    .event-card.is-entering p {
+      animation: caption-in .58s .12s cubic-bezier(.2,.8,.25,1) both;
+    }
+
+    @keyframes caption-in {
+      from { opacity: 0; transform: translateY(9px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 900px) {
+      .page-shell { width: min(100% - 16px, 1840px); padding-top: 10px; }
+      .topbar { align-items: start; flex-direction: column; gap: 8px; }
+      .toolbar { grid-template-columns: 1fr auto; }
+      h1 { white-space: normal; }
+      .story-column { grid-column: 1 / -1; grid-row: 2; }
+      #flow-map { overflow-x: auto; }
+      #flow-map svg { width: 1350px; max-height: none; }
+      .event-card { grid-template-columns: 1fr; gap: 5px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .flow-pulse { animation: none !important; }
+      .task-label-shell { animation: none !important; }
+    }
+    #flow-map[data-mode="tasks"] .flow-ribbon[data-task="d01"] { stroke: #1c8d91; }
+    .task-label[data-task="d01"] rect { fill: #1c8d91; }
+    #flow-map[data-mode="tasks"] .flow-ribbon[data-task="d04"] { stroke: #ca6f27; }
+    .task-label[data-task="d04"] rect { fill: #ca6f27; }
+    #flow-map[data-mode="tasks"] .flow-ribbon[data-task="d05"] { stroke: #4f9a55; }
+    .task-label[data-task="d05"] rect { fill: #4f9a55; }
+    #flow-map[data-mode="tasks"] .flow-ribbon[data-task="d06"] { stroke: #a15f7a; }
+    .task-label[data-task="d06"] rect { fill: #a15f7a; }
+    #flow-map[data-mode="tasks"] .flow-ribbon[data-task="d09"] { stroke: #b8902a; }
+    .task-label[data-task="d09"] rect { fill: #b8902a; }
+    #flow-map[data-mode="tasks"] .flow-ribbon[data-task="cont"] { stroke: #b9c3bf; opacity: .35; }
+    .filter-banner { margin: 0; padding: 10px 28px; background: #fff4d6; border-bottom: 1px solid #e8d49a; }
+    .filter-banner a { margin-left: 8px; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <div class="page-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">SZMSZ-feladatátadások · áttekintő nézet</p>
+        <h1>Feladatátadások a minisztériumok között, SZMSZ-ek alapján</h1>
+      </div>
+      <a class="detail-link" href="cofog-organo.html">← Vissza a nézegetőbe</a>
+    </header>
+
+    <section class="map-shell" aria-labelledby="mode-summary">
+      <div class="toolbar">
+        <div class="mode-column">
+          <div class="segmented" aria-label="Az ábra olvasata">
+            <button id="organisation-mode" type="button" aria-pressed="true">Szervezetek</button>
+            <button id="task-mode" type="button" aria-pressed="false">Közfeladatok</button>
+          </div>
+          <p id="mode-summary"><strong>Szervezeti folytonosság.</strong> Melyik minisztériumból mi lett.</p>
+        </div>
+        <div class="story-column">
+          <aside class="event-card" aria-live="polite">
+            <strong id="event-heading">A teljes történet</strong>
+            <p id="event-description">Egyetlen képen látszik a 2017-es szétágazás, az OKI kialakulása és a 2023-as NNGYK-egyesülés.</p>
+            <div id="task-story-status" class="task-story-status" hidden>
+              <span id="task-story-count"></span>
+              <span id="task-story-label"></span>
+            </div>
+            <div id="task-summary" class="task-summary" hidden>
+              <button id="task-summary-toggle" class="task-summary-toggle" type="button" aria-expanded="false" aria-controls="task-summary-panel"></button>
+              <div id="task-summary-panel" class="task-summary-panel" role="region" aria-label="Az esemény feladatútjai" hidden></div>
+            </div>
+          </aside>
+          <div class="legend" aria-label="Közfeladatok színmagyarázata">
+            <span style="--swatch:#1c8d91"><i></i>Általános közszolgáltatások</span>
+            <span style="--swatch:#ca6f27"><i></i>Gazdasági ügyek</span>
+            <span style="--swatch:#4f9a55"><i></i>Környezetvédelem</span>
+            <span style="--swatch:#a15f7a"><i></i>Lakás, település, kommunális ügyek</span>
+            <span style="--swatch:#b8902a"><i></i>Oktatás</span>
+          </div>
+        </div>
+        <div class="playback-controls" aria-label="Történet lejátszása">
+          <label class="speed-control" for="task-speed">
+            <span>Tempó</span>
+            <select id="task-speed" aria-label="Feladatok tempója">
+              <option value="calm" selected>Nyugodt</option>
+              <option value="normal">Normál</option>
+              <option value="fast">Gyors</option>
+            </select>
+          </label>
+          <button id="previous-event" class="step-button" type="button" aria-label="Előző esemény">←</button>
+          <button id="motion-toggle" class="motion-toggle" type="button" aria-pressed="false">▶ Áramlás</button>
+          <button id="next-event" class="step-button" type="button" aria-label="Következő esemény">→</button>
+        </div>
+      </div>
+
+      <nav id="timeline" aria-label="Időmetszetek"></nav>
+
+      <div id="flow-map" data-mode="organisations" data-motion="false" aria-label="A szervezetek időbeli folyása">
+        <svg viewBox="0 0 2280 994" role="img" aria-labelledby="map-title map-description">
+          <title id="map-title">Feladatátadások a minisztériumok között</title>
+          <desc id="map-description">Balról jobbra haladó, 8 időmetszetes alluviális ábra. A szalagok a szervezeti és közfeladat-folytonosságot jelzik.</desc>
+          <g id="guides"></g>
+          <g id="now-marker" aria-label="A lejátszás jelenlegi időmetszete">
+            <line id="now-line" x1="140" y1="6" x2="140" y2="972"></line>
+            <text id="now-label" x="140" y="990" text-anchor="middle">MOST</text>
+          </g>
+          <g id="ribbons"></g>
+          <g id="pulses"></g>
+          <g id="nodes"></g>
+          <g id="task-labels" aria-label="Az aktuális időlépés közfeladatai"></g>
+        </svg>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const dates = [{"date": "2014-07-23", "year": "2014.07", "title": "Kiinduló állapot", "description": "A minisztériumok az első feladatátadás előtti napon (2014-07-23), a hatályos SZMSZ-ükkel. Az ábra csak a 11 vizsgált szervezetet mutatja.", "source": "SZMSZ-feladatfonalak", "sourceUrl": "cofog-organo.html"}, {"date": "2014-10-11", "year": "2014.10", "title": "8 átadás, 93 feladat", "period": "2014-07-24 – 2014-10-11", "description": "2014-07-24 – 2014-10-11. 27 feladat: NGM → MvM; 18 feladat: NFM → MvM; 12 feladat: NFM → BM; 11 feladat: NGM → NFM; és még 4 átadás. Bekötetlen gyenge jelölt: 1.", "source": "SZMSZ-feladatfonalak, átadási csomagok", "sourceUrl": "cofog-organo.html"}, {"date": "2019-03-01", "year": "2019", "title": "4 átadás, 132 feladat", "period": "2018-09-11 – 2019-03-01", "description": "2018-09-11 – 2019-03-01. 57 feladat: NGM → ITM; 38 feladat: MvM → ITM; 32 feladat: FM → ITM; 5 feladat: MvM → AM. Bekötetlen gyenge jelölt: 1.", "source": "SZMSZ-feladatfonalak, átadási csomagok", "sourceUrl": "cofog-organo.html"}, {"date": "2022-06-18", "year": "2022", "title": "3 átadás, 367 feladat", "period": "2022-06-12 – 2022-06-18", "description": "2022-06-12 – 2022-06-18. 184 feladat: ITM → MvM; 119 feladat: PM → MvM; 64 feladat: ITM → IM.", "source": "SZMSZ-feladatfonalak, átadási csomagok", "sourceUrl": "cofog-organo.html"}, {"date": "2023-07-01", "year": "2023", "title": "5 átadás, 649 feladat", "period": "2022-12-29 – 2023-07-01", "description": "2022-12-29 – 2023-07-01. 548 feladat: ITM → ÉKM; 63 feladat: MvM → ÉKM; 31 feladat: ITM → GFM; 4 feladat: PM → GFM; és még 1 átadás. Bekötetlen gyenge jelölt: 1.", "source": "SZMSZ-feladatfonalak, átadási csomagok", "sourceUrl": "cofog-organo.html"}, {"date": "2024-03-01", "year": "2024", "title": "1 átadás, 578 feladat", "period": "2024-03-01", "description": "2024-03-01. 578 feladat: MvM → KTM. Bekötetlen gyenge jelölt: 1.", "source": "SZMSZ-feladatfonalak, átadási csomagok", "sourceUrl": "cofog-organo.html"}, {"date": "2025-01-01", "year": "2025", "title": "1 átadás, 133 feladat", "period": "2025-01-01", "description": "2025-01-01. 133 feladat: PM → NGM.", "source": "SZMSZ-feladatfonalak, átadási csomagok", "sourceUrl": "cofog-organo.html"}, {"date": "2026-10-02", "year": "2026", "title": "3 átadás, 163 feladat", "period": "2026-09-16 – 2026-10-02", "description": "2026-09-16 – 2026-10-02. 135 feladat: AM → ÉKFM; 27 feladat: BM → ÉKFM; 1 feladat: MvM → VTM.", "source": "SZMSZ-feladatfonalak, átadási csomagok", "sourceUrl": "cofog-organo.html"}];
+
+    const nodes = [{"id": "n0-pir:311607", "org": "pir:311607", "date": "2014-07-23", "x": 35, "y": 30, "name": "Belügyminisztérium", "meta": "BM · 7/2010 · 642 feladat", "merged": false}, {"id": "n0-pir:305679", "org": "pir:305679", "date": "2014-07-23", "x": 35, "y": 114, "name": "Vidékfejlesztési Minisztérium", "meta": "VM · 2/2014 · 1 382 feladat", "merged": false}, {"id": "n0-pir:303390", "org": "pir:303390", "date": "2014-07-23", "x": 35, "y": 198, "name": "Nemzetgazdasági Minisztérium", "meta": "NGM · 11/2013 · 1 443 feladat", "merged": false}, {"id": "n0-pir:311344", "org": "pir:311344", "date": "2014-07-23", "x": 35, "y": 282, "name": "Külügyminisztérium", "meta": "KüM · 1/2013 · 524 feladat", "merged": false}, {"id": "n0-pir:764410", "org": "pir:764410", "date": "2014-07-23", "x": 35, "y": 366, "name": "Nemzeti Fejlesztési Minisztérium", "meta": "NFM · 24/2013 · 987 feladat", "merged": false}, {"id": "n1-pir:311607", "org": "pir:311607", "date": "2014-10-11", "x": 305, "y": 30, "name": "Belügyminisztérium", "meta": "BM · 15/2014 · 817 feladat", "merged": true}, {"id": "n1-pir:305679", "org": "pir:305679", "date": "2014-10-11", "x": 305, "y": 114, "name": "Földművelésügyi Minisztérium", "meta": "FM · 3/2014 · 1 386 feladat", "merged": false}, {"id": "n1-pir:303390", "org": "pir:303390", "date": "2014-10-11", "x": 305, "y": 198, "name": "Nemzetgazdasági Minisztérium", "meta": "NGM · 22/2014 · 1 724 feladat", "merged": false}, {"id": "n1-pir:311344", "org": "pir:311344", "date": "2014-10-11", "x": 305, "y": 282, "name": "Külgazdasági és Külügyminisztérium", "meta": "KKM · 2/2014 · 709 feladat", "merged": true}, {"id": "n1-pir:764410", "org": "pir:764410", "date": "2014-10-11", "x": 305, "y": 366, "name": "Nemzeti Fejlesztési Minisztérium", "meta": "NFM · 33/2014 · 1 271 feladat", "merged": true}, {"id": "n1-pir:775290", "org": "pir:775290", "date": "2014-10-11", "x": 305, "y": 450, "name": "Miniszterelnökség", "meta": "MvM · 1/2014 · 1 369 feladat", "merged": true}, {"id": "n2-pir:311607", "org": "pir:311607", "date": "2019-03-01", "x": 575, "y": 30, "name": "Belügyminisztérium", "meta": "BM · 11/2018 · 1 264 feladat", "merged": false}, {"id": "n2-pir:305679", "org": "pir:305679", "date": "2019-03-01", "x": 575, "y": 114, "name": "Agrárminisztérium", "meta": "AM · 2/2018 · 1 785 feladat", "merged": true}, {"id": "n2-pir:303390", "org": "pir:303390", "date": "2019-03-01", "x": 575, "y": 198, "name": "Pénzügyminisztérium", "meta": "PM · 1/2019 · 754 feladat", "merged": false}, {"id": "n2-pir:311344", "org": "pir:311344", "date": "2019-03-01", "x": 575, "y": 282, "name": "Külgazdasági és Külügyminisztérium", "meta": "KKM · 17/2018 · 1 155 feladat", "merged": false}, {"id": "n2-pir:764410", "org": "pir:764410", "date": "2019-03-01", "x": 575, "y": 366, "name": "Innovációs és Technológiai Minisztérium", "meta": "ITM · 4/2019 · 2 728 feladat", "merged": true}, {"id": "n2-pir:775290", "org": "pir:775290", "date": "2019-03-01", "x": 575, "y": 450, "name": "Miniszterelnökség", "meta": "MvM · 14/2018 · 1 598 feladat", "merged": false}, {"id": "n2-pir:300070", "org": "pir:300070", "date": "2019-03-01", "x": 575, "y": 534, "name": "Igazságügyi Minisztérium", "meta": "IM · 7/2014 · 555 feladat", "merged": false}, {"id": "n3-pir:311607", "org": "pir:311607", "date": "2022-06-18", "x": 845, "y": 30, "name": "Belügyminisztérium", "meta": "BM · 11/2018 · 1 264 feladat", "merged": false}, {"id": "n3-pir:305679", "org": "pir:305679", "date": "2022-06-18", "x": 845, "y": 114, "name": "Agrárminisztérium", "meta": "AM · 10/2019 · 1 771 feladat", "merged": false}, {"id": "n3-pir:303390", "org": "pir:303390", "date": "2022-06-18", "x": 845, "y": 198, "name": "Pénzügyminisztérium", "meta": "PM · 1/2020 · 653 feladat", "merged": false}, {"id": "n3-pir:311344", "org": "pir:311344", "date": "2022-06-18", "x": 845, "y": 282, "name": "Külgazdasági és Külügyminisztérium", "meta": "KKM · 4/2019 · 1 127 feladat", "merged": false}, {"id": "n3-pir:764410", "org": "pir:764410", "date": "2022-06-18", "x": 845, "y": 366, "name": "Innovációs és Technológiai Minisztérium", "meta": "ITM · 4/2019 · 2 728 feladat", "merged": false}, {"id": "n3-pir:775290", "org": "pir:775290", "date": "2022-06-18", "x": 845, "y": 450, "name": "Miniszterelnökség", "meta": "MvM · 5/2022 · 2 868 feladat", "merged": true}, {"id": "n3-pir:300070", "org": "pir:300070", "date": "2022-06-18", "x": 845, "y": 534, "name": "Igazságügyi Minisztérium", "meta": "IM · 4/2022 · 976 feladat", "merged": true}, {"id": "n4-pir:311607", "org": "pir:311607", "date": "2023-07-01", "x": 1115, "y": 30, "name": "Belügyminisztérium", "meta": "BM · 12/2022 · 2 206 feladat", "merged": false}, {"id": "n4-pir:305679", "org": "pir:305679", "date": "2023-07-01", "x": 1115, "y": 114, "name": "Agrárminisztérium", "meta": "AM · 1/2023 · 1 685 feladat", "merged": true}, {"id": "n4-pir:303390", "org": "pir:303390", "date": "2023-07-01", "x": 1115, "y": 198, "name": "Pénzügyminisztérium", "meta": "PM · 1/2023 · 394 feladat", "merged": false}, {"id": "n4-pir:311344", "org": "pir:311344", "date": "2023-07-01", "x": 1115, "y": 282, "name": "Külgazdasági és Külügyminisztérium", "meta": "KKM · 11/2022 · 1 384 feladat", "merged": false}, {"id": "n4-pir:764410", "org": "pir:764410", "date": "2023-07-01", "x": 1115, "y": 366, "name": "Energiaügyi Minisztérium", "meta": "EM · 1/2022 · 1 222 feladat", "merged": false}, {"id": "n4-pir:775290", "org": "pir:775290", "date": "2023-07-01", "x": 1115, "y": 450, "name": "Miniszterelnökség", "meta": "MvM · 5/2022 · 2 868 feladat", "merged": false}, {"id": "n4-pir:300070", "org": "pir:300070", "date": "2023-07-01", "x": 1115, "y": 534, "name": "Igazságügyi Minisztérium", "meta": "IM · 4/2022 · 976 feladat", "merged": false}, {"id": "n4-pir:847395", "org": "pir:847395", "date": "2023-07-01", "x": 1115, "y": 618, "name": "Építési és Közlekedési Minisztérium", "meta": "ÉKM · 2/2022 · 2 075 feladat", "merged": true}, {"id": "n4-pir:848392", "org": "pir:848392", "date": "2023-07-01", "x": 1115, "y": 702, "name": "Gazdaságfejlesztési Minisztérium", "meta": "GFM · 1/2023 · 796 feladat", "merged": true}, {"id": "n5-pir:311607", "org": "pir:311607", "date": "2024-03-01", "x": 1385, "y": 30, "name": "Belügyminisztérium", "meta": "BM · 12/2022 · 2 206 feladat", "merged": false}, {"id": "n5-pir:305679", "org": "pir:305679", "date": "2024-03-01", "x": 1385, "y": 114, "name": "Agrárminisztérium", "meta": "AM · 1/2023 · 1 685 feladat", "merged": false}, {"id": "n5-pir:303390", "org": "pir:303390", "date": "2024-03-01", "x": 1385, "y": 198, "name": "Pénzügyminisztérium", "meta": "PM · 1/2023 · 394 feladat", "merged": false}, {"id": "n5-pir:311344", "org": "pir:311344", "date": "2024-03-01", "x": 1385, "y": 282, "name": "Külgazdasági és Külügyminisztérium", "meta": "KKM · 11/2022 · 1 384 feladat", "merged": false}, {"id": "n5-pir:764410", "org": "pir:764410", "date": "2024-03-01", "x": 1385, "y": 366, "name": "Energiaügyi Minisztérium", "meta": "EM · 1/2022 · 1 222 feladat", "merged": false}, {"id": "n5-pir:775290", "org": "pir:775290", "date": "2024-03-01", "x": 1385, "y": 450, "name": "Miniszterelnökség", "meta": "MvM · 1/2024 · 947 feladat", "merged": false}, {"id": "n5-pir:300070", "org": "pir:300070", "date": "2024-03-01", "x": 1385, "y": 534, "name": "Igazságügyi Minisztérium", "meta": "IM · 10/2023 · 868 feladat", "merged": false}, {"id": "n5-pir:847395", "org": "pir:847395", "date": "2024-03-01", "x": 1385, "y": 618, "name": "Építési és Közlekedési Minisztérium", "meta": "ÉKM · 2/2022 · 2 075 feladat", "merged": false}, {"id": "n5-pir:848392", "org": "pir:848392", "date": "2024-03-01", "x": 1385, "y": 702, "name": "Gazdaságfejlesztési Minisztérium", "meta": "GFM · 1/2023 · 796 feladat", "merged": false}, {"id": "n5-pir:849278", "org": "pir:849278", "date": "2024-03-01", "x": 1385, "y": 786, "name": "Közigazgatási és Területfejlesztési Minisztérium", "meta": "KTM · 10/2024 · 2 382 feladat", "merged": true}, {"id": "n6-pir:311607", "org": "pir:311607", "date": "2025-01-01", "x": 1655, "y": 30, "name": "Belügyminisztérium", "meta": "BM · 12/2022 · 2 206 feladat", "merged": false}, {"id": "n6-pir:305679", "org": "pir:305679", "date": "2025-01-01", "x": 1655, "y": 114, "name": "Agrárminisztérium", "meta": "AM · 1/2023 · 1 685 feladat", "merged": false}, {"id": "n6-pir:311344", "org": "pir:311344", "date": "2025-01-01", "x": 1655, "y": 282, "name": "Külgazdasági és Külügyminisztérium", "meta": "KKM · 11/2022 · 1 384 feladat", "merged": false}, {"id": "n6-pir:764410", "org": "pir:764410", "date": "2025-01-01", "x": 1655, "y": 366, "name": "Energiaügyi Minisztérium", "meta": "EM · 1/2022 · 1 222 feladat", "merged": false}, {"id": "n6-pir:775290", "org": "pir:775290", "date": "2025-01-01", "x": 1655, "y": 450, "name": "Miniszterelnökség", "meta": "MvM · 1/2024 · 947 feladat", "merged": false}, {"id": "n6-pir:300070", "org": "pir:300070", "date": "2025-01-01", "x": 1655, "y": 534, "name": "Igazságügyi Minisztérium", "meta": "IM · 5/2024 · 863 feladat", "merged": false}, {"id": "n6-pir:847395", "org": "pir:847395", "date": "2025-01-01", "x": 1655, "y": 618, "name": "Építési és Közlekedési Minisztérium", "meta": "ÉKM · 2/2022 · 2 075 feladat", "merged": false}, {"id": "n6-pir:848392", "org": "pir:848392", "date": "2025-01-01", "x": 1655, "y": 702, "name": "Nemzetgazdasági Minisztérium", "meta": "NGM · 30/2024 · 1 316 feladat", "merged": true}, {"id": "n6-pir:849278", "org": "pir:849278", "date": "2025-01-01", "x": 1655, "y": 786, "name": "Közigazgatási és Területfejlesztési Minisztérium", "meta": "KTM · 10/2024 · 2 382 feladat", "merged": false}, {"id": "n7-pir:311607", "org": "pir:311607", "date": "2026-10-02", "x": 1925, "y": 30, "name": "Belügyminisztérium", "meta": "BM · 8/2026 · 1 218 feladat", "merged": false}, {"id": "n7-pir:305679", "org": "pir:305679", "date": "2026-10-02", "x": 1925, "y": 114, "name": "Agrár- és Élelmiszergazdaságért Felelős Minisztérium", "meta": "AÉM · 6/2026 · 1 172 feladat", "merged": false}, {"id": "n7-pir:311344", "org": "pir:311344", "date": "2026-10-02", "x": 1925, "y": 282, "name": "Külügyminisztérium", "meta": "KüM · 2/2026 · 1 379 feladat", "merged": false}, {"id": "n7-pir:764410", "org": "pir:764410", "date": "2026-10-02", "x": 1925, "y": 366, "name": "Energiaügyi Minisztérium", "meta": "EM · 6/2025 · 1 887 feladat", "merged": false}, {"id": "n7-pir:775290", "org": "pir:775290", "date": "2026-10-02", "x": 1925, "y": 450, "name": "Miniszterelnökség", "meta": "MvM · 2/2026 · 1 158 feladat", "merged": false}, {"id": "n7-pir:300070", "org": "pir:300070", "date": "2026-10-02", "x": 1925, "y": 534, "name": "Igazságügyi Minisztérium", "meta": "IM · 5/2024 · 863 feladat", "merged": false}, {"id": "n7-pir:847395", "org": "pir:847395", "date": "2026-10-02", "x": 1925, "y": 618, "name": "Építési és Közlekedési Minisztérium", "meta": "ÉKM · 2/2022 · 2 075 feladat", "merged": false}, {"id": "n7-pir:848392", "org": "pir:848392", "date": "2026-10-02", "x": 1925, "y": 702, "name": "Pénzügyminisztérium", "meta": "PM · 4/2026 · 676 feladat", "merged": false}, {"id": "n7-pir:849278", "org": "pir:849278", "date": "2026-10-02", "x": 1925, "y": 786, "name": "Vidék- és Településfejlesztési Minisztérium", "meta": "VTM · 3/2026 · 1 097 feladat", "merged": true}, {"id": "n7-pir:855437", "org": "pir:855437", "date": "2026-10-02", "x": 1925, "y": 870, "name": "Élő Környezetért Felelős Minisztérium", "meta": "ÉKFM · 3/2026 · 1 714 feladat", "merged": true}];
+
+    const links = [{"from": "n0-pir:311607", "to": "n1-pir:311607", "event": "2014-10-11", "fromOrg": "pir:311607", "toOrg": "pir:311607", "task": "cont", "weight": 13.1, "label": "353 feladatfonal folytatódik"}, {"from": "n0-pir:305679", "to": "n1-pir:305679", "event": "2014-10-11", "fromOrg": "pir:305679", "toOrg": "pir:305679", "task": "cont", "weight": 20.1, "label": "1103 feladatfonal folytatódik"}, {"from": "n0-pir:303390", "to": "n1-pir:303390", "event": "2014-10-11", "fromOrg": "pir:303390", "toOrg": "pir:303390", "task": "cont", "weight": 19.9, "label": "1073 feladatfonal folytatódik"}, {"from": "n0-pir:311344", "to": "n1-pir:311344", "event": "2014-10-11", "fromOrg": "pir:311344", "toOrg": "pir:311344", "task": "cont", "weight": 13.1, "label": "351 feladatfonal folytatódik"}, {"from": "n0-pir:764410", "to": "n1-pir:764410", "event": "2014-10-11", "fromOrg": "pir:764410", "toOrg": "pir:764410", "task": "cont", "weight": 17.4, "label": "763 feladatfonal folytatódik"}, {"from": "n0-pir:303390", "to": "n1-pir:775290", "event": "2014-10-11", "fromOrg": "pir:303390", "toOrg": "pir:775290", "task": "d01", "weight": 6.5, "label": "27 feladat: NGM → MvM · Általános K+F politika 27", "taskLabel": "27 feladat · általános K+F politika", "pair": "NGM → MvM", "n": 27, "codes": {"014010": 27}, "threads": [1578, 1580, 1584, 1586, 1588, 1594, 1596, 1597, 1604, 1605, 1606, 1607, 1612, 1614, 2766, 2769, 2770, 2771, 2772, 2773, 2777, 2779, 2780, 2781, 2782, 2783, 2784]}, {"from": "n0-pir:764410", "to": "n1-pir:775290", "event": "2014-10-11", "fromOrg": "pir:764410", "toOrg": "pir:775290", "task": "d01", "weight": 6.1, "label": "18 feladat: NFM → MvM · Az államháztartás igazgatása, ellenőrzése 11; Általános gazdasági és kereskedelmi ügyek igazgatása 5; Hírközlés és az információs társadalom fejlesztésének igazgatása és támogatása 2", "taskLabel": "18 feladat · államháztartás", "pair": "NFM → MvM", "n": 18, "codes": {"011210": 11, "046010": 2, "041110": 5}, "threads": [16595, 16967, 16968, 16970, 16976, 16980, 16981, 16983, 16984, 16988, 17021, 17022, 17386, 17387, 17453, 17454, 17472, 17557]}, {"from": "n0-pir:764410", "to": "n1-pir:311607", "event": "2014-10-11", "fromOrg": "pir:764410", "toOrg": "pir:311607", "task": "d01", "weight": 5.7, "label": "12 feladat: NFM → BM · Informatikai fejlesztések, szolgáltatások 11; Hírközlés és az információs társadalom fejlesztésének igazgatása és támogatása 1", "taskLabel": "12 feladat · informatikai fejlesztések, szolgáltatások", "pair": "NFM → BM", "n": 12, "codes": {"013370": 11, "046010": 1}, "threads": [13396, 13397, 13399, 13409, 13412, 13413, 13417, 13420, 13421, 13427, 13428, 13429]}, {"from": "n0-pir:303390", "to": "n1-pir:764410", "event": "2014-10-11", "fromOrg": "pir:303390", "toOrg": "pir:764410", "task": "d04", "weight": 5.6, "label": "11 feladat: NGM → NFM · Általános gazdasági és kereskedelmi ügyek igazgatása 11", "taskLabel": "11 feladat · általános gazdasági és kereskedelmi ügyek", "pair": "NGM → NFM", "n": 11, "codes": {"041110": 11}, "threads": [980, 981, 990, 991, 992, 997, 1046, 1648, 1671, 3159, 3160]}, {"from": "n0-pir:305679", "to": "n1-pir:775290", "event": "2014-10-11", "fromOrg": "pir:305679", "toOrg": "pir:775290", "task": "d04", "weight": 5.5, "label": "10 feladat: VM → MvM · Halászat igazgatása és támogatása 9; Mezőgazdasági támogatások 1", "taskLabel": "10 feladat · halászat", "pair": "VM → MvM", "n": 10, "codes": {"042350": 9, "042120": 1}, "threads": [5713, 6688, 6690, 6691, 6692, 6693, 6694, 6695, 6696, 6697]}, {"from": "n0-pir:311607", "to": "n1-pir:775290", "event": "2014-10-11", "fromOrg": "pir:311607", "toOrg": "pir:775290", "task": "d06", "weight": 5.3, "label": "7 feladat: BM → MvM · Településfejlesztés igazgatása 6; Építésügy igazgatása 1", "taskLabel": "7 feladat · településfejlesztés", "pair": "BM → MvM", "n": 7, "codes": {"062010": 6, "044310": 1}, "threads": [12966, 12995, 12996, 12997, 13002, 13004, 13037]}, {"from": "n0-pir:303390", "to": "n1-pir:311344", "event": "2014-10-11", "fromOrg": "pir:303390", "toOrg": "pir:311344", "task": "d04", "weight": 5.2, "label": "6 feladat: NGM → KKM · Általános gazdasági és kereskedelmi ügyek igazgatása 4; Kis- és középvállalkozások működési és fejlesztési támogatásai 1; Működőtőke-beruházások komplex támogatásai 1", "taskLabel": "6 feladat · általános gazdasági és kereskedelmi ügyek", "pair": "NGM → KKM", "n": 6, "codes": {"047460": 1, "041110": 4, "047470": 1}, "threads": [2549, 2587, 3143, 3172, 3227, 3243]}, {"from": "n0-pir:305679", "to": "n1-pir:311607", "event": "2014-10-11", "fromOrg": "pir:305679", "toOrg": "pir:311607", "task": "d06", "weight": 4.7, "label": "2 feladat: VM → BM · Vízügy igazgatása 2", "taskLabel": "2 feladat · vízügy", "pair": "VM → BM", "n": 2, "codes": {"063010": 2}, "threads": [6374, 6457]}, {"from": "n1-pir:311607", "to": "n2-pir:311607", "event": "2019-03-01", "fromOrg": "pir:311607", "toOrg": "pir:311607", "task": "cont", "weight": 16.9, "label": "705 feladatfonal folytatódik"}, {"from": "n1-pir:305679", "to": "n2-pir:305679", "event": "2019-03-01", "fromOrg": "pir:305679", "toOrg": "pir:305679", "task": "cont", "weight": 19.3, "label": "997 feladatfonal folytatódik"}, {"from": "n1-pir:303390", "to": "n2-pir:303390", "event": "2019-03-01", "fromOrg": "pir:303390", "toOrg": "pir:303390", "task": "cont", "weight": 13.1, "label": "351 feladatfonal folytatódik"}, {"from": "n1-pir:311344", "to": "n2-pir:311344", "event": "2019-03-01", "fromOrg": "pir:311344", "toOrg": "pir:311344", "task": "cont", "weight": 13.4, "label": "378 feladatfonal folytatódik"}, {"from": "n1-pir:764410", "to": "n2-pir:764410", "event": "2019-03-01", "fromOrg": "pir:764410", "toOrg": "pir:764410", "task": "cont", "weight": 16.0, "label": "610 feladatfonal folytatódik"}, {"from": "n1-pir:775290", "to": "n2-pir:775290", "event": "2019-03-01", "fromOrg": "pir:775290", "toOrg": "pir:775290", "task": "cont", "weight": 14.4, "label": "457 feladatfonal folytatódik"}, {"from": "n1-pir:303390", "to": "n2-pir:764410", "event": "2019-03-01", "fromOrg": "pir:303390", "toOrg": "pir:764410", "task": "d09", "weight": 7.7, "label": "57 feladat: NGM → ITM · Oktatás igazgatása 29; Kis- és középvállalkozások működési és fejlesztési támogatásai 17; Feldolgozóipar igazgatása és támogatása 5; Építésügy igazgatása 3; Általános gazdasági és kereskedelmi ügyek igazgatása 2", "taskLabel": "57 feladat · oktatás, kis- és középvállalkozások működési és fejlesztési támogatásai", "pair": "NGM → ITM", "n": 57, "codes": {"047460": 17, "098010": 29, "044210": 5, "043610": 1, "041110": 2, "044310": 3}, "threads": [1625, 1646, 1655, 1656, 1658, 1670, 1675, 1677, 1764, 1765, 1766, 1773, 1783, 1785, 1793, 1802, 1803, 1811, 1814, 2419, 2420, 2434, 2579, 2830, 2832, 2835, 2838, 2839, 2840, 2841, 2844, 2846, 2847, 3140, 3151, 3162, 3167, 3184, 3191, 3198, 3411, 3413, 3414, 3415, 3417, 3418, 3421, 3480, 3481, 3482, 3484, 3489, 3490, 3491, 3492, 3498, 4183]}, {"from": "n1-pir:775290", "to": "n2-pir:764410", "event": "2019-03-01", "fromOrg": "pir:775290", "toOrg": "pir:764410", "task": "d01", "weight": 7.0, "label": "38 feladat: MvM → ITM · Pályázat- és támogatáskezelés, ellenőrzés 22; Általános gazdasági és kereskedelmi ügyek igazgatása 9; Kormányzati igazgatási tevékenység 6; Területfejlesztés igazgatása 1", "taskLabel": "38 feladat · pályázat- és támogatáskezelés, ellenőrzés, általános gazdasági és kereskedelmi ügyek", "pair": "MvM → ITM", "n": 38, "codes": {"011120": 6, "013330": 22, "041110": 9, "041140": 1}, "threads": [17021, 17022, 17386, 19846, 19849, 19850, 19851, 19852, 19853, 19864, 19866, 19882, 19884, 19886, 19888, 19894, 19898, 19902, 19903, 19906, 19910, 19920, 19921, 19944, 19947, 19950, 19952, 19955, 19970, 19999, 20000, 20002, 20006, 20007, 20008, 20009, 20015, 20016]}, {"from": "n1-pir:305679", "to": "n2-pir:764410", "event": "2019-03-01", "fromOrg": "pir:305679", "toOrg": "pir:764410", "task": "d05", "weight": 6.7, "label": "32 feladat: FM → ITM · Hulladékgazdálkodás igazgatása 31; Vízügy igazgatása 1", "taskLabel": "32 feladat · hulladékgazdálkodás", "pair": "FM → ITM", "n": 32, "codes": {"051010": 31, "063010": 1}, "threads": [6080, 6087, 6097, 7310, 7369, 7370, 7371, 7383, 7384, 7385, 7390, 7392, 7393, 7394, 7395, 7396, 7397, 7406, 7408, 7410, 7411, 7413, 7415, 7416, 7420, 7423, 7425, 7426, 7427, 7429, 7430, 7432]}, {"from": "n1-pir:775290", "to": "n2-pir:305679", "event": "2019-03-01", "fromOrg": "pir:775290", "toOrg": "pir:305679", "task": "d04", "weight": 5.1, "label": "5 feladat: MvM → AM · Halászat igazgatása és támogatása 3; Mezőgazdasági támogatások 2", "taskLabel": "5 feladat · halászat", "pair": "MvM → AM", "n": 5, "codes": {"042120": 2, "042350": 3}, "threads": [7960, 7961, 7962, 7984, 7986]}, {"from": "n2-pir:311607", "to": "n3-pir:311607", "event": "2022-06-18", "fromOrg": "pir:311607", "toOrg": "pir:311607", "task": "cont", "weight": 21.3, "label": "1264 feladatfonal folytatódik"}, {"from": "n2-pir:305679", "to": "n3-pir:305679", "event": "2022-06-18", "fromOrg": "pir:305679", "toOrg": "pir:305679", "task": "cont", "weight": 23.0, "label": "1530 feladatfonal folytatódik"}, {"from": "n2-pir:303390", "to": "n3-pir:303390", "event": "2022-06-18", "fromOrg": "pir:303390", "toOrg": "pir:303390", "task": "cont", "weight": 16.3, "label": "642 feladatfonal folytatódik"}, {"from": "n2-pir:311344", "to": "n3-pir:311344", "event": "2022-06-18", "fromOrg": "pir:311344", "toOrg": "pir:311344", "task": "cont", "weight": 19.6, "label": "1039 feladatfonal folytatódik"}, {"from": "n2-pir:764410", "to": "n3-pir:764410", "event": "2022-06-18", "fromOrg": "pir:764410", "toOrg": "pir:764410", "task": "cont", "weight": 29.4, "label": "2728 feladatfonal folytatódik"}, {"from": "n2-pir:775290", "to": "n3-pir:775290", "event": "2022-06-18", "fromOrg": "pir:775290", "toOrg": "pir:775290", "task": "cont", "weight": 17.0, "label": "717 feladatfonal folytatódik"}, {"from": "n2-pir:300070", "to": "n3-pir:300070", "event": "2022-06-18", "fromOrg": "pir:300070", "toOrg": "pir:300070", "task": "cont", "weight": 14.1, "label": "429 feladatfonal folytatódik"}, {"from": "n2-pir:764410", "to": "n3-pir:775290", "event": "2022-06-18", "fromOrg": "pir:764410", "toOrg": "pir:775290", "task": "d01", "weight": 10.6, "label": "184 feladat: ITM → MvM · Pályázat- és támogatáskezelés, ellenőrzés 106; Kormányzati igazgatási tevékenység 26; Közúti közlekedés igazgatása és támogatása 19; Területfejlesztés igazgatása 10; Általános gazdasági és kereskedelmi ügyek igazgatása 6", "taskLabel": "184 feladat · pályázat- és támogatáskezelés, ellenőrzés, kormányzati igazgatási tevékenység", "pair": "ITM → MvM", "n": 184, "codes": {"045161": 5, "013330": 106, "011120": 26, "041140": 10, "045110": 19, "056010": 4, "013210": 1, "043610": 4, "041110": 6, "063010": 1, "045310": 1, "047310": 1}, "threads": [17386, 17726, 17727, 17728, 17729, 17730, 17731, 17732, 17734, 17737, 17739, 17757, 17759, 17775, 17792, 17793, 17794, 17799, 17801, 17807, 17823, 17923, 17934, 17935, 17936, 17937, 17938, 17939, 17940, 17945, 17957, 17968, 17970, 17976, 17978, 17979, 17981, 17982, 17984, 17985, 17986, 17987, 17988, 17991, 17992, 17995, 17997, 17998, 18000, 18001, 18002, 18829, 18833, 18834, 18835, 18838, 18840, 18841, 18843, 18844, 18846, 18847, 18853, 18854, 18855, 18856, 18857, 18858, 18866, 18868, 18869, 18870, 18873, 18876, 18892, 18893, 18895, 18900, 18901, 18903, 18904, 18905, 18906, 18907, 18912, 18921, 18928, 18930, 18932, 19141, 19142, 19143, 19144, 19146, 19150, 19154, 19157, 19158, 19159, 19162, 19163, 19215, 19217, 19218, 19231, 19232, 19233, 19234, 19235, 19236, 19238, 19239, 19243, 19246, 19247, 19248, 19249, 19250, 19251, 19252, 19253, 19255, 19258, 19259, 19262, 19269, 19306, 19307, 19308, 19309, 19317, 19852, 19853, 19865, 19867, 19869, 19871, 19872, 19873, 19874, 19877, 19882, 19883, 19884, 19886, 19887, 19893, 19894, 19895, 19896, 19898, 19899, 19900, 19901, 19903, 19904, 19905, 19906, 19908, 19910, 19914, 19916, 19917, 19928, 19930, 19931, 19933, 19934, 19940, 19946, 19960, 19970, 19971, 19996, 19998, 19999, 20000, 20001, 20005, 20008, 20013, 20014, 20016, 20017]}, {"from": "n2-pir:303390", "to": "n3-pir:775290", "event": "2022-06-18", "fromOrg": "pir:303390", "toOrg": "pir:775290", "task": "d01", "weight": 9.3, "label": "119 feladat: PM → MvM · Pályázat- és támogatáskezelés, ellenőrzés 85; Területfejlesztés igazgatása 19; Kormányzati igazgatási tevékenység 14; Kis- és középvállalkozások működési és fejlesztési támogatásai 1", "taskLabel": "119 feladat · pályázat- és támogatáskezelés, ellenőrzés", "pair": "PM → MvM", "n": 119, "codes": {"041140": 19, "013330": 85, "011120": 14, "047460": 1}, "threads": [3589, 3600, 3606, 3619, 3636, 3643, 3684, 3687, 3700, 3702, 3706, 3707, 3713, 3752, 3753, 3755, 3759, 3767, 3769, 3770, 3774, 3775, 3790, 3794, 3820, 3821, 3826, 3828, 3829, 3832, 3843, 3850, 3879, 3880, 3882, 3884, 3888, 3889, 3890, 3892, 3893, 3910, 3920, 3925, 3927, 3928, 3929, 3940, 3941, 3949, 3950, 3960, 3961, 3962, 3964, 3966, 3969, 3971, 3973, 3977, 3978, 4250, 4257, 4258, 4275, 4276, 4284, 4285, 4289, 4290, 4292, 4295, 4642, 4644, 4645, 4646, 4647, 4651, 4653, 4655, 4657, 4658, 4662, 4684, 4688, 4718, 4720, 4728, 4749, 4750, 4758, 4760, 4762, 4773, 4774, 4775, 4781, 4782, 4783, 4789, 4790, 4791, 4792, 4922, 4923, 4924, 4925, 4927, 4928, 4930, 4931, 4945, 4946, 4950, 4955, 4957, 4959, 4963, 4972]}, {"from": "n2-pir:764410", "to": "n3-pir:300070", "event": "2022-06-18", "fromOrg": "pir:764410", "toOrg": "pir:300070", "task": "d04", "weight": 7.9, "label": "64 feladat: ITM → IM · Általános gazdasági és kereskedelmi ügyek igazgatása 64", "taskLabel": "64 feladat · általános gazdasági és kereskedelmi ügyek", "pair": "ITM → IM", "n": 64, "codes": {"041110": 64}, "threads": [979, 980, 981, 982, 990, 991, 992, 996, 997, 998, 1006, 1007, 1008, 1010, 1011, 1012, 1013, 1014, 1015, 1016, 1017, 1018, 1021, 1022, 1024, 1028, 1029, 1030, 1031, 1032, 1033, 1037, 1039, 1040, 1043, 1045, 1046, 1047, 1051, 1053, 1054, 1061, 1062, 1063, 1064, 1065, 1066, 1067, 1068, 1079, 1080, 1081, 1082, 1083, 1086, 1087, 1088, 1089, 1090, 1091, 1093, 1094, 1095, 1096]}, {"from": "n3-pir:311607", "to": "n4-pir:311607", "event": "2023-07-01", "fromOrg": "pir:311607", "toOrg": "pir:311607", "task": "cont", "weight": 19.0, "label": "949 feladatfonal folytatódik"}, {"from": "n3-pir:305679", "to": "n4-pir:305679", "event": "2023-07-01", "fromOrg": "pir:305679", "toOrg": "pir:305679", "task": "cont", "weight": 22.8, "label": "1499 feladatfonal folytatódik"}, {"from": "n3-pir:303390", "to": "n4-pir:303390", "event": "2023-07-01", "fromOrg": "pir:303390", "toOrg": "pir:303390", "task": "cont", "weight": 12.9, "label": "338 feladatfonal folytatódik"}, {"from": "n3-pir:311344", "to": "n4-pir:311344", "event": "2023-07-01", "fromOrg": "pir:311344", "toOrg": "pir:311344", "task": "cont", "weight": 18.5, "label": "896 feladatfonal folytatódik"}, {"from": "n3-pir:764410", "to": "n4-pir:764410", "event": "2023-07-01", "fromOrg": "pir:764410", "toOrg": "pir:764410", "task": "cont", "weight": 15.5, "label": "563 feladatfonal folytatódik"}, {"from": "n3-pir:775290", "to": "n4-pir:775290", "event": "2023-07-01", "fromOrg": "pir:775290", "toOrg": "pir:775290", "task": "cont", "weight": 30.0, "label": "2868 feladatfonal folytatódik"}, {"from": "n3-pir:300070", "to": "n4-pir:300070", "event": "2023-07-01", "fromOrg": "pir:300070", "toOrg": "pir:300070", "task": "cont", "weight": 19.2, "label": "976 feladatfonal folytatódik"}, {"from": "n3-pir:764410", "to": "n4-pir:847395", "event": "2023-07-01", "fromOrg": "pir:764410", "toOrg": "pir:847395", "task": "d04", "weight": 15.4, "label": "548 feladat: ITM → ÉKM · Légi szállítás igazgatása és támogatása 163; Közúti közlekedés igazgatása és támogatása 154; Vasúti közlekedés igazgatása és támogatása 125; Vízi közlekedés igazgatása és támogatása 43; Baleset-megelőzés 35", "taskLabel": "548 feladat · légi szállítás, közúti közlekedés, vasúti közlekedés", "pair": "ITM → ÉKM", "n": 548, "codes": {"045110": 154, "045410": 163, "045310": 125, "031070": 35, "045210": 43, "045190": 18, "044320": 2, "013330": 1, "044310": 5, "011120": 1, "043510": 1}, "threads": [2419, 3184, 16616, 16617, 16618, 16619, 16621, 16623, 16624, 16625, 16626, 16627, 16629, 16630, 16632, 16634, 16637, 16638, 16639, 16640, 16641, 16643, 16644, 16645, 16646, 16647, 16648, 16650, 16652, 16655, 16658, 16667, 16668, 16669, 16672, 16673, 16674, 16675, 16677, 16678, 16679, 16681, 16685, 16687, 16688, 16690, 16695, 16699, 16700, 16701, 16706, 16708, 16709, 16710, 16711, 16712, 16714, 16715, 16716, 16724, 16725, 16726, 16731, 16732, 16739, 16740, 16745, 16747, 16748, 17473, 17475, 17480, 17482, 17484, 17485, 17487, 17488, 17490, 17492, 17714, 17780, 17825, 18268, 18275, 18276, 18306, 18308, 18998, 18999, 19001, 19002, 19003, 19004, 19005, 19006, 19007, 19008, 19009, 19010, 19011, 19012, 19013, 19014, 19015, 19016, 19017, 19018, 19019, 19020, 19021, 19022, 19023, 19024, 19025, 19030, 19032, 19033, 19034, 19035, 19036, 19037, 19038, 19041, 19044, 19045, 19046, 19048, 19050, 19051, 19055, 19057, 19058, 19059, 19060, 19061, 19066, 19068, 19069, 19071, 19072, 19073, 19074, 19075, 19076, 19077, 19078, 19079, 19080, 19081, 19082, 19083, 19084, 19085, 19087, 19088, 19104, 19105, 19106, 19107, 19108, 19109, 19110, 19111, 19112, 19113, 19114, 19115, 19119, 19120, 19122, 19123, 19125, 19126, 19127, 19128, 19129, 19130, 19131, 19132, 19133, 19134, 19135, 19139, 19169, 19170, 19171, 19172, 19173, 19175, 19176, 19178, 19179, 19183, 19187, 19188, 19189, 19190, 19191, 19194, 19195, 19196, 19197, 19198, 19199, 19201, 19202, 19203, 19204, 19207, 19209, 19211, 19212, 19213, 19303, 19304, 19330, 19333, 19335, 19336, 19340, 19342, 19343, 19344, 19346, 19348, 19349, 19350, 19354, 19356, 19357, 19358, 19359, 19360, 19361, 19362, 19363, 19364, 19365, 19366, 19367, 19368, 19373, 19380, 19381, 19382, 19383, 19384, 19385, 19387, 19389, 19390, 19400, 19401, 19403, 19404, 19405, 19410, 19411, 19422, 19423, 19425, 19426, 19428, 19435, 19438, 19439, 19440, 19441, 19442, 19443, 19445, 19446, 19447, 19448, 19450, 19451, 19453, 19454, 19455, 19456, 19457, 19459, 19461, 19462, 19464, 19465, 19466, 19467, 19468, 19469, 19470, 19472, 19473, 19477, 19481, 19482, 19483, 19487, 19488, 19489, 19496, 19497, 19500, 19501, 19506, 19507, 19509, 19510, 19511, 19512, 19513, 19514, 19516, 19518, 19519, 19520, 19521, 19524, 19525, 19527, 19528, 19529, 19530, 19531, 19533, 19534, 19535, 19536, 19537, 19538, 19539, 19540, 19541, 19542, 19543, 19544, 19545, 19546, 19547, 19548, 19549, 19551, 19552, 19554, 19555, 19556, 19557, 19558, 19559, 19563, 19564, 19565, 19566, 19568, 19570, 19575, 19576, 19577, 19579, 19581, 19583, 19585, 19586, 19587, 19588, 19590, 19591, 19592, 19593, 19594, 19597, 19600, 19601, 19602, 19603, 19604, 19605, 19606, 19607, 19608, 19609, 19610, 19611, 19612, 19613, 19614, 19615, 19616, 19618, 19619, 19620, 19622, 19623, 19625, 19626, 19630, 19631, 19634, 19635, 19636, 19637, 19638, 19639, 19640, 19641, 19642, 19643, 19645, 19646, 19648, 19649, 19650, 19651, 19652, 19653, 19654, 19655, 19656, 19657, 19658, 19659, 19660, 19661, 19662, 19663, 19665, 19666, 19668, 19669, 19670, 19671, 19672, 19673, 19675, 19680, 19682, 19683, 19684, 19693, 19694, 19698, 19700, 19701, 19703, 19704, 19711, 19713, 19715, 19716, 19717, 19718, 19725, 19727, 19733, 19734, 19735, 19736, 19738, 19740, 19742, 19743, 19744, 19745, 19746, 19747, 19748, 19749, 19750, 19751, 19752, 19753, 19754, 19756, 19757, 19758, 19759, 19760, 19761, 19762, 19763, 19764, 19765, 19767, 19768, 19769, 19770, 19771, 19772, 19774, 19776, 19777, 19778, 19779, 19780, 19781, 19782, 19783, 19784, 19785, 19786, 19788, 19789, 19790, 19793, 19794, 19795, 19796, 19797, 19798, 19799, 19800, 19801, 19802, 19803, 19805, 19806, 19807, 19808, 19809, 19810, 19811, 19812, 19813, 19814, 19815, 19816, 19818, 19819, 19820, 19823, 19824, 19825, 19826, 19827, 19828, 19829, 19831, 19832, 19833, 19835, 19836, 19837, 19838, 19839, 19840, 19841, 19842, 19844]}, {"from": "n3-pir:775290", "to": "n4-pir:847395", "event": "2023-07-01", "fromOrg": "pir:775290", "toOrg": "pir:847395", "task": "d04", "weight": 7.9, "label": "63 feladat: MvM → ÉKM · Építésügy igazgatása 26; Településfejlesztés igazgatása 21; Kultúra igazgatása 11; Történelmi hely, építmény, egyéb látványosság működtetése és megóvása 5", "taskLabel": "63 feladat · építésügy, településfejlesztés", "pair": "MvM → ÉKM", "n": 63, "codes": {"082010": 11, "044310": 26, "062010": 21, "082070": 5}, "threads": [12966, 13002, 21955, 21956, 21957, 21978, 21988, 22401, 22410, 22412, 22417, 22433, 22438, 23277, 23280, 23282, 23283, 23299, 23301, 23304, 23305, 23310, 23311, 23312, 23316, 23318, 23327, 23329, 23330, 23332, 23333, 23334, 23335, 23336, 23338, 23349, 23355, 23356, 23357, 23360, 23361, 23371, 23372, 23373, 23376, 23377, 23378, 23379, 23381, 23384, 23385, 23386, 23410, 23414, 23429, 23432, 23433, 23435, 23439, 23460, 23462, 23464, 23476]}, {"from": "n3-pir:764410", "to": "n4-pir:848392", "event": "2023-07-01", "fromOrg": "pir:764410", "toOrg": "pir:848392", "task": "d04", "weight": 6.7, "label": "31 feladat: ITM → GFM · Feldolgozóipar igazgatása és támogatása 22; Hírközlés és az információs társadalom fejlesztésének igazgatása és támogatása 4; Kis- és középvállalkozások működési és fejlesztési támogatásai 3; Általános gazdasági és kereskedelmi ügyek igazgatása 1; Kormányzati igazgatási tevékenység 1", "taskLabel": "31 feladat · feldolgozóipar", "pair": "ITM → GFM", "n": 31, "codes": {"044210": 22, "047460": 3, "041110": 1, "046010": 4, "011120": 1}, "threads": [1646, 2434, 2579, 3151, 3167, 3198, 17306, 17671, 18257, 18267, 18272, 18286, 18296, 18297, 18298, 18300, 18314, 18316, 18320, 18321, 18322, 18323, 18333, 18338, 18339, 18341, 18350, 18372, 18727, 18948, 18952]}, {"from": "n3-pir:303390", "to": "n4-pir:848392", "event": "2023-07-01", "fromOrg": "pir:303390", "toOrg": "pir:848392", "task": "d04", "weight": 5.0, "label": "4 feladat: PM → GFM · Általános gazdasági és kereskedelmi ügyek igazgatása 4", "taskLabel": "4 feladat · általános gazdasági és kereskedelmi ügyek", "pair": "PM → GFM", "n": 4, "codes": {"041110": 4}, "threads": [2793, 3558, 4915, 4919]}, {"from": "n3-pir:764410", "to": "n4-pir:305679", "event": "2023-07-01", "fromOrg": "pir:764410", "toOrg": "pir:305679", "task": "d04", "weight": 4.8, "label": "3 feladat: ITM → AM · Kis- és nagykereskedelem igazgatása és támogatása 3", "taskLabel": "3 feladat · kis- és nagykereskedelem", "pair": "ITM → AM", "n": 3, "codes": {"047110": 3}, "threads": [8429, 8430, 8434]}, {"from": "n4-pir:311607", "to": "n5-pir:311607", "event": "2024-03-01", "fromOrg": "pir:311607", "toOrg": "pir:311607", "task": "cont", "weight": 26.8, "label": "2206 feladatfonal folytatódik"}, {"from": "n4-pir:305679", "to": "n5-pir:305679", "event": "2024-03-01", "fromOrg": "pir:305679", "toOrg": "pir:305679", "task": "cont", "weight": 23.9, "label": "1685 feladatfonal folytatódik"}, {"from": "n4-pir:303390", "to": "n5-pir:303390", "event": "2024-03-01", "fromOrg": "pir:303390", "toOrg": "pir:303390", "task": "cont", "weight": 13.6, "label": "394 feladatfonal folytatódik"}, {"from": "n4-pir:311344", "to": "n5-pir:311344", "event": "2024-03-01", "fromOrg": "pir:311344", "toOrg": "pir:311344", "task": "cont", "weight": 22.1, "label": "1384 feladatfonal folytatódik"}, {"from": "n4-pir:764410", "to": "n5-pir:764410", "event": "2024-03-01", "fromOrg": "pir:764410", "toOrg": "pir:764410", "task": "cont", "weight": 21.0, "label": "1222 feladatfonal folytatódik"}, {"from": "n4-pir:775290", "to": "n5-pir:775290", "event": "2024-03-01", "fromOrg": "pir:775290", "toOrg": "pir:775290", "task": "cont", "weight": 17.9, "label": "824 feladatfonal folytatódik"}, {"from": "n4-pir:300070", "to": "n5-pir:300070", "event": "2024-03-01", "fromOrg": "pir:300070", "toOrg": "pir:300070", "task": "cont", "weight": 17.7, "label": "797 feladatfonal folytatódik"}, {"from": "n4-pir:847395", "to": "n5-pir:847395", "event": "2024-03-01", "fromOrg": "pir:847395", "toOrg": "pir:847395", "task": "cont", "weight": 26.1, "label": "2075 feladatfonal folytatódik"}, {"from": "n4-pir:848392", "to": "n5-pir:848392", "event": "2024-03-01", "fromOrg": "pir:848392", "toOrg": "pir:848392", "task": "cont", "weight": 17.7, "label": "796 feladatfonal folytatódik"}, {"from": "n4-pir:775290", "to": "n5-pir:849278", "event": "2024-03-01", "fromOrg": "pir:775290", "toOrg": "pir:849278", "task": "d01", "weight": 15.7, "label": "578 feladat: MvM → KTM · Pályázat- és támogatáskezelés, ellenőrzés 263; Kormányzati igazgatási tevékenység 166; Az államháztartás igazgatása, ellenőrzése 39; Területfejlesztés igazgatása 34; Földügy igazgatása 29", "taskLabel": "578 feladat · pályázat- és támogatáskezelés, ellenőrzés, kormányzati igazgatási tevékenység", "pair": "MvM → KTM", "n": 578, "codes": {"013330": 263, "011210": 39, "011120": 166, "013110": 4, "041120": 29, "013370": 22, "041140": 34, "013210": 3, "045110": 9, "043610": 6, "041110": 1, "045310": 1, "063010": 1}, "threads": [3589, 3636, 3643, 3684, 3687, 3700, 3707, 3820, 3821, 3826, 3828, 3829, 3843, 3879, 3880, 3889, 3890, 3892, 3893, 3910, 3920, 3925, 3927, 3928, 3929, 3940, 3941, 3949, 3950, 3960, 3961, 3962, 3969, 3971, 3973, 3977, 4250, 4275, 4276, 4284, 4285, 4289, 4290, 4292, 4295, 4644, 4645, 4651, 4657, 4662, 4684, 4688, 4718, 4749, 4750, 4758, 4762, 4782, 4783, 4789, 4790, 4792, 4924, 4925, 4927, 4928, 4930, 4931, 4959, 4963, 4972, 16967, 16968, 16970, 16980, 16981, 16983, 16984, 16988, 17453, 17454, 17759, 17934, 17935, 17936, 17937, 17939, 17968, 17970, 18843, 18856, 18857, 18868, 18869, 18870, 18873, 18876, 19215, 19217, 19235, 19239, 19243, 19249, 19251, 19252, 19253, 19269, 19852, 19853, 19865, 19867, 19869, 19871, 19872, 19873, 19874, 19877, 19882, 19884, 19887, 19893, 19894, 19895, 19896, 19898, 19899, 19901, 19903, 19904, 19906, 19914, 19916, 19930, 19931, 19933, 19940, 19960, 19971, 20001, 20005, 21478, 22119, 22145, 22146, 22147, 22148, 22150, 22151, 22153, 22251, 22253, 22254, 22255, 22256, 22258, 22259, 22270, 22272, 22273, 22458, 22465, 22466, 22471, 22479, 22480, 22481, 22486, 22487, 22489, 22491, 22492, 22493, 22494, 22514, 22515, 22516, 22517, 22519, 22531, 22542, 22556, 22592, 22600, 22606, 22608, 22609, 22658, 22659, 22661, 22663, 22664, 22665, 22666, 22669, 23075, 23077, 23078, 23079, 23080, 23111, 23115, 23117, 23137, 23142, 23143, 23144, 23145, 23146, 23147, 23148, 23149, 23150, 23151, 23159, 23172, 23184, 23185, 23191, 23192, 23193, 23194, 23195, 23196, 23197, 23198, 23199, 23201, 23203, 23204, 23209, 23211, 23215, 23220, 23223, 23231, 23232, 23478, 23482, 23489, 23498, 23499, 24226, 24232, 24239, 24242, 24243, 24244, 24246, 24247, 24249, 24257, 24258, 24259, 24261, 24262, 24263, 24265, 24266, 24267, 24271, 24272, 24273, 24274, 24275, 24276, 24277, 24278, 24279, 24280, 24281, 24282, 24283, 24284, 24286, 24287, 24289, 24290, 24291, 24292, 24293, 24295, 24297, 24298, 24299, 24337, 24338, 24339, 24340, 24342, 24344, 24348, 24349, 24353, 24361, 24362, 24363, 24366, 24371, 24373, 24374, 24375, 24380, 24384, 24386, 24387, 24388, 24389, 24390, 24392, 24394, 24396, 24397, 24399, 24400, 24401, 24402, 24407, 24408, 24409, 24410, 24417, 24418, 24420, 24421, 24422, 24424, 24425, 24426, 24430, 24431, 24432, 24433, 24434, 24435, 24436, 24437, 24438, 24439, 24635, 24636, 24638, 24639, 24655, 24673, 24674, 24676, 24718, 24722, 24727, 24734, 24735, 24741, 24743, 24745, 24747, 24759, 24769, 24770, 24775, 24776, 24777, 24778, 24780, 24785, 24786, 24787, 24789, 24790, 24791, 24792, 24793, 24795, 24796, 24799, 24800, 24802, 24803, 24804, 24805, 24806, 24808, 24809, 24810, 24811, 24812, 24813, 24815, 24818, 24819, 24820, 24821, 24823, 24827, 24828, 24836, 24837, 24838, 24839, 24841, 24842, 24843, 24867, 24878, 24879, 24885, 24892, 24894, 24896, 24897, 24898, 24899, 24900, 24902, 24903, 24904, 24905, 24906, 24907, 24908, 24909, 24910, 24911, 24912, 24922, 24923, 24928, 24933, 24934, 24935, 24936, 24940, 24941, 24944, 24945, 24950, 24952, 24953, 24960, 24961, 24963, 24967, 24975, 24990, 24992, 24997, 25000, 25006, 25013, 25015, 25031, 25036, 25060, 25062, 25064, 25068, 25108, 25244, 25255, 25269, 25271, 25277, 25280, 25284, 25289, 25290, 25291, 25292, 25293, 25294, 25295, 25296, 25297, 25299, 25301, 25302, 25334, 25335, 25336, 25338, 25342, 25343, 25344, 25345, 25346, 25348, 25349, 25350, 25354, 25356, 25357, 25369, 25370, 25371, 25373, 25374, 25375, 25376, 25378, 25380, 25381, 25383, 25384, 25385, 25386, 25390, 25392, 25395, 25396, 25397, 25398, 25401, 25402, 25404, 25430, 25436, 25440, 25441, 25443, 25447, 25449, 25453, 25454, 25455, 25457, 25458, 25461, 25469, 25470, 25481, 25482, 25483, 25484, 25485, 25486, 25487, 25490, 25491, 25493, 25495, 25496, 25497, 25499, 25500, 25501, 25502, 25506, 25507, 25508, 25540, 25541, 25542, 25552, 25555, 25556, 25557, 25558, 25559, 25561, 25562, 25563, 25565, 25644, 25683, 25688, 25690, 25693, 25695, 25699, 25703, 25704, 25705, 25706, 25707, 25708, 25709, 25711, 25712, 25713]}, {"from": "n5-pir:311607", "to": "n6-pir:311607", "event": "2025-01-01", "fromOrg": "pir:311607", "toOrg": "pir:311607", "task": "cont", "weight": 26.8, "label": "2206 feladatfonal folytatódik"}, {"from": "n5-pir:305679", "to": "n6-pir:305679", "event": "2025-01-01", "fromOrg": "pir:305679", "toOrg": "pir:305679", "task": "cont", "weight": 23.9, "label": "1685 feladatfonal folytatódik"}, {"from": "n5-pir:311344", "to": "n6-pir:311344", "event": "2025-01-01", "fromOrg": "pir:311344", "toOrg": "pir:311344", "task": "cont", "weight": 22.1, "label": "1384 feladatfonal folytatódik"}, {"from": "n5-pir:764410", "to": "n6-pir:764410", "event": "2025-01-01", "fromOrg": "pir:764410", "toOrg": "pir:764410", "task": "cont", "weight": 21.0, "label": "1222 feladatfonal folytatódik"}, {"from": "n5-pir:775290", "to": "n6-pir:775290", "event": "2025-01-01", "fromOrg": "pir:775290", "toOrg": "pir:775290", "task": "cont", "weight": 18.9, "label": "947 feladatfonal folytatódik"}, {"from": "n5-pir:300070", "to": "n6-pir:300070", "event": "2025-01-01", "fromOrg": "pir:300070", "toOrg": "pir:300070", "task": "cont", "weight": 18.0, "label": "827 feladatfonal folytatódik"}, {"from": "n5-pir:847395", "to": "n6-pir:847395", "event": "2025-01-01", "fromOrg": "pir:847395", "toOrg": "pir:847395", "task": "cont", "weight": 26.1, "label": "2075 feladatfonal folytatódik"}, {"from": "n5-pir:848392", "to": "n6-pir:848392", "event": "2025-01-01", "fromOrg": "pir:848392", "toOrg": "pir:848392", "task": "cont", "weight": 16.0, "label": "611 feladatfonal folytatódik"}, {"from": "n5-pir:849278", "to": "n6-pir:849278", "event": "2025-01-01", "fromOrg": "pir:849278", "toOrg": "pir:849278", "task": "cont", "weight": 27.7, "label": "2382 feladatfonal folytatódik"}, {"from": "n5-pir:303390", "to": "n6-pir:848392", "event": "2025-01-01", "fromOrg": "pir:303390", "toOrg": "pir:848392", "task": "d01", "weight": 9.6, "label": "133 feladat: PM → NGM · Adó-, vám- és jövedéki igazgatás 40; Az államháztartás igazgatása, ellenőrzése 40; Általános gazdasági és kereskedelmi ügyek igazgatása 19; Nemzetközi szervezetekben való részvétel 12; Nyugdíjbiztosítási szolgáltatások igazgatása 11", "taskLabel": "133 feladat · adó-, vám- és jövedéki, államháztartás", "pair": "PM → NGM", "n": 133, "codes": {"011220": 40, "011320": 12, "102010": 11, "011210": 40, "011120": 6, "041110": 19, "047470": 1, "061010": 2, "013210": 1, "036020": 1}, "threads": [1440, 1467, 1945, 1946, 1957, 2027, 2031, 2035, 2040, 2047, 2049, 2052, 2094, 2098, 2100, 2101, 2106, 2109, 2135, 2148, 2206, 2221, 2236, 2255, 2258, 2291, 2324, 2331, 2332, 2393, 2399, 2739, 2863, 2865, 2866, 2875, 2905, 3004, 3009, 3024, 3043, 3044, 3045, 3051, 3064, 3068, 3073, 3077, 3080, 3104, 3123, 3132, 3265, 3432, 3433, 3434, 3437, 3460, 4210, 4214, 4216, 4239, 4242, 4434, 4438, 4439, 4441, 4568, 4578, 4812, 4813, 4814, 4816, 4817, 4818, 4819, 4822, 4824, 4825, 4826, 4827, 4828, 4829, 4831, 4832, 4833, 4837, 4869, 4874, 4875, 4876, 4877, 4878, 4880, 4881, 4882, 4883, 4884, 4885, 4887, 4893, 4895, 4896, 4898, 4901, 4902, 4995, 4997, 4998, 4999, 5000, 5001, 5002, 5003, 5004, 5005, 5008, 5010, 5011, 5012, 5013, 5021, 5022, 5033, 5036, 5037, 5038, 5039, 5040, 5041, 5044, 5046, 5051]}, {"from": "n6-pir:311607", "to": "n7-pir:311607", "event": "2026-10-02", "fromOrg": "pir:311607", "toOrg": "pir:311607", "task": "cont", "weight": 16.4, "label": "650 feladatfonal folytatódik"}, {"from": "n6-pir:305679", "to": "n7-pir:305679", "event": "2026-10-02", "fromOrg": "pir:305679", "toOrg": "pir:305679", "task": "cont", "weight": 17.3, "label": "748 feladatfonal folytatódik"}, {"from": "n6-pir:311344", "to": "n7-pir:311344", "event": "2026-10-02", "fromOrg": "pir:311344", "toOrg": "pir:311344", "task": "cont", "weight": 18.1, "label": "842 feladatfonal folytatódik"}, {"from": "n6-pir:764410", "to": "n7-pir:764410", "event": "2026-10-02", "fromOrg": "pir:764410", "toOrg": "pir:764410", "task": "cont", "weight": 20.2, "label": "1116 feladatfonal folytatódik"}, {"from": "n6-pir:775290", "to": "n7-pir:775290", "event": "2026-10-02", "fromOrg": "pir:775290", "toOrg": "pir:775290", "task": "cont", "weight": 13.0, "label": "341 feladatfonal folytatódik"}, {"from": "n6-pir:300070", "to": "n7-pir:300070", "event": "2026-10-02", "fromOrg": "pir:300070", "toOrg": "pir:300070", "task": "cont", "weight": 18.3, "label": "863 feladatfonal folytatódik"}, {"from": "n6-pir:847395", "to": "n7-pir:847395", "event": "2026-10-02", "fromOrg": "pir:847395", "toOrg": "pir:847395", "task": "cont", "weight": 26.1, "label": "2075 feladatfonal folytatódik"}, {"from": "n6-pir:848392", "to": "n7-pir:848392", "event": "2026-10-02", "fromOrg": "pir:848392", "toOrg": "pir:848392", "task": "cont", "weight": 14.2, "label": "439 feladatfonal folytatódik"}, {"from": "n6-pir:849278", "to": "n7-pir:849278", "event": "2026-10-02", "fromOrg": "pir:849278", "toOrg": "pir:849278", "task": "cont", "weight": 17.1, "label": "725 feladatfonal folytatódik"}, {"from": "n6-pir:305679", "to": "n7-pir:855437", "event": "2026-10-02", "fromOrg": "pir:305679", "toOrg": "pir:855437", "task": "d05", "weight": 9.6, "label": "135 feladat: AM → ÉKFM · Természet- és tájvédelem igazgatása és támogatása 115; Erdőgazdálkodás igazgatása és támogatása 10; Génmegőrzés, fajtavédelem 8; Mezőgazdaság igazgatása 2", "taskLabel": "135 feladat · természet- és tájvédelem", "pair": "AM → ÉKFM", "n": 135, "codes": {"042140": 8, "054010": 115, "042210": 10, "042110": 2}, "threads": [5563, 5565, 5569, 5571, 5580, 5588, 5600, 5601, 5606, 5932, 5934, 5966, 6004, 6138, 6140, 6149, 6151, 6152, 6153, 6166, 6168, 6169, 6170, 6172, 6176, 6177, 6183, 6185, 6186, 6188, 6192, 6193, 6194, 6195, 6247, 6248, 6249, 6546, 6552, 6745, 6746, 6845, 6847, 6864, 7011, 7018, 7020, 7023, 7105, 7322, 7323, 7325, 7326, 7327, 7329, 7330, 7332, 7334, 7335, 7336, 7337, 7338, 7339, 7340, 7341, 7342, 7343, 7347, 7348, 7351, 7354, 7357, 7358, 7359, 7559, 7770, 7772, 7773, 7774, 7775, 7777, 7778, 7780, 7781, 7782, 7785, 7787, 7788, 7789, 7790, 7791, 7792, 7794, 7795, 7796, 7797, 7798, 7799, 7800, 7801, 7802, 7803, 7804, 7805, 7806, 7807, 7809, 7810, 7812, 7813, 7814, 7815, 7816, 7817, 7826, 7827, 7828, 7829, 7830, 7831, 7832, 7833, 7834, 7837, 7838, 7839, 7840, 8072, 8084, 8261, 8264, 8377, 8415, 8567, 8569]}, {"from": "n6-pir:311607", "to": "n7-pir:855437", "event": "2026-10-02", "fromOrg": "pir:311607", "toOrg": "pir:855437", "task": "d06", "weight": 6.5, "label": "27 feladat: BM → ÉKFM · Vízügy igazgatása 27", "taskLabel": "27 feladat · vízügy", "pair": "BM → ÉKFM", "n": 27, "codes": {"063010": 27}, "threads": [6457, 13511, 13515, 13520, 13523, 13524, 13525, 13528, 13529, 13546, 13548, 13549, 13557, 13563, 13564, 13575, 13576, 13577, 13578, 13579, 13580, 13581, 13585, 13591, 13592, 13593, 14546]}, {"from": "n6-pir:775290", "to": "n7-pir:849278", "event": "2026-10-02", "fromOrg": "pir:775290", "toOrg": "pir:849278", "task": "d01", "weight": 4.5, "label": "1 feladat: MvM → VTM · Kormányzati igazgatási tevékenység 1", "taskLabel": "1 feladat · kormányzati igazgatási tevékenység", "pair": "MvM → VTM", "n": 1, "codes": {"011120": 1}, "threads": [23718]}];
+
+    const PEAK = 2868;
+
+    (() => {
+      const params = new URLSearchParams(location.search);
+      const code = params.get("code"), thread = params.get("thread");
+      if (!code && !thread) return;
+      const name = params.get("name") || (code ? "COFOG " + code : "a kiválasztott feladat");
+      const kept = [];
+      for (const link of links) {
+        if (link.task === "cont") { kept.push(link); continue; }
+        const n = thread ? (link.threads.includes(+thread) ? 1 : 0)
+          : Object.entries(link.codes).reduce((sum, [c, k]) => sum + (c.startsWith(code) ? k : 0), 0);
+        if (!n) continue;
+        link.n = n;
+        link.weight = Math.round((4 + 26 * Math.sqrt(n / PEAK)) * 10) / 10;
+        link.taskLabel = thread ? "ez a feladat" : n + " feladat";
+        link.label = n + " feladat: " + link.pair;
+        kept.push(link);
+      }
+      links.length = 0;
+      links.push(...kept);
+      const moved = links.filter(link => link.task !== "cont");
+      window.FILTER_FOCUS = (moved[0] || {}).event;
+      dates.slice(1).forEach(item => {
+        const here = moved.filter(link => link.event === item.date);
+        const total = here.reduce((sum, link) => sum + link.n, 0);
+        item.title = here.length ? (thread ? "Itt került át" : here.length + " átadás, " + total + " feladat") : "Nincs átadás";
+        item.description = item.period + ". " + (here.length ? here.map(link => link.label).join("; ") + "." : "Ebben a körben " + name + " nem érintett.");
+      });
+      const banner = document.createElement("p");
+      banner.className = "filter-banner";
+      banner.innerHTML = (moved.length
+        ? "Csak <b></b> átadásai: " + moved.length + " szalag. "
+        : "<b></b>: a vizsgált időszakban nincs bekötött átadás. ") + "<a href='szmsz-transfer-overview.html'>Összkép →</a>";
+      banner.querySelector("b").textContent = name;
+      document.querySelector("header.topbar").after(banner);
+    })();
+
+    const svgNS = "http://www.w3.org/2000/svg";
+    const nodeById = new Map(nodes.map(node => [node.id, node]));
+    const nodeWidth = 210;
+    const nodeHeight = 72;
+    const dateXs = [140, 410, 680, 950, 1220, 1490, 1760, 2030];
+    const dateXByDate = new Map(dates.map((item, index) => [item.date, dateXs[index]]));
+    const storyDwellMs = 4600;
+    const taskStepDurations = { calm:3600, normal:2200, fast:1100 };
+    let taskStepMs = taskStepDurations.calm;
+    let storyIndex = 0;
+    let storyTimer = null;
+    let taskStepTimer = null;
+    let taskStepIndex = -1;
+
+    function svgElement(name, attributes = {}) {
+      const element = document.createElementNS(svgNS, name);
+      Object.entries(attributes).forEach(([key, value]) => element.setAttribute(key, value));
+      return element;
+    }
+
+    function wrapTaskLabel(textElement, value, maxLineWidth) {
+      const lines = [];
+      let currentLine = "";
+      value.trim().split(/\s+/).forEach(word => {
+        const candidate = currentLine ? `${currentLine} ${word}` : word;
+        textElement.textContent = candidate;
+        if (currentLine && textElement.getComputedTextLength() > maxLineWidth) {
+          lines.push(currentLine);
+          currentLine = word;
+        } else {
+          currentLine = candidate;
+        }
+      });
+      if (currentLine) lines.push(currentLine);
+
+      textElement.replaceChildren();
+      const lineHeight = 18;
+      const firstLineY = 1 - ((lines.length - 1) * lineHeight) / 2;
+      lines.forEach((line, index) => {
+        const tspan = svgElement("tspan", { x:0, y:firstLineY + index * lineHeight });
+        tspan.textContent = index < lines.length - 1 ? `${line} ` : line;
+        textElement.appendChild(tspan);
+      });
+      return lines;
+    }
+
+    function ribbonPath(link) {
+      const from = nodeById.get(link.from);
+      const to = nodeById.get(link.to);
+      const startX = from.x + nodeWidth;
+      const startY = from.y + nodeHeight / 2;
+      const endX = to.x;
+      const endY = to.y + nodeHeight / 2;
+      const bend = Math.max(55, (endX - startX) * .52);
+      return `M ${startX} ${startY} C ${startX + bend} ${startY}, ${endX - bend} ${endY}, ${endX} ${endY}`;
+    }
+
+    function renderTimeline() {
+      const timeline = document.getElementById("timeline");
+      dates.forEach(item => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.dataset.date = item.date;
+        button.textContent = item.year;
+        button.setAttribute("aria-pressed", "false");
+        button.setAttribute("aria-label", `${item.date} · ${item.title}`);
+        button.addEventListener("click", () => selectDateManually(item.date));
+        timeline.appendChild(button);
+      });
+    }
+
+    function renderGuides() {
+      const guideLayer = document.getElementById("guides");
+      dates.forEach((_item, index) => {
+        guideLayer.appendChild(svgElement("line", { x1:dateXs[index], y1:12, x2:dateXs[index], y2:969, class:"time-guide" }));
+      });
+    }
+
+    function taskLabelLayout() {
+      const layout = new Map();
+      const minimumGap = 42;
+      dates.slice(1).forEach(event => {
+        const eventLinks = links
+          .filter(link => link.event === event.date && link.fromOrg !== link.toOrg)
+          .map(link => {
+            const from = nodeById.get(link.from);
+            const to = nodeById.get(link.to);
+            return {
+              link,
+              naturalY:(from.y + to.y) / 2 + nodeHeight / 2
+            };
+          })
+          .sort((first, second) => first.naturalY - second.naturalY);
+
+        let previousY = 28 - minimumGap;
+        eventLinks.forEach(item => {
+          item.y = Math.max(item.naturalY, previousY + minimumGap);
+          previousY = item.y;
+        });
+
+        const overflow = Math.max(0, previousY - 954);
+        eventLinks.forEach(item => {
+          layout.set(item.link, {
+            x:dateXByDate.get(event.date) - 135,
+            y:item.y - overflow
+          });
+        });
+      });
+      return layout;
+    }
+
+    function separateTaskLabels() {
+      const spacing = 6;
+      dates.slice(1).forEach(event => {
+        const eventLabels = [...document.querySelectorAll(`.task-label[data-event="${event.date}"]`)]
+          .map(label => {
+            const matrix = label.transform.baseVal.consolidate().matrix;
+            const rect = label.querySelector("rect");
+            return {
+              label,
+              x:matrix.e,
+              y:matrix.f,
+              rectY:Number(rect.getAttribute("y")),
+              height:Number(rect.getAttribute("height"))
+            };
+          })
+          .sort((first, second) => first.y - second.y);
+
+        let previousBottom = -Infinity;
+        eventLabels.forEach(item => {
+          const top = item.y + item.rectY;
+          if (top < previousBottom + spacing) {
+            item.y += previousBottom + spacing - top;
+          }
+          previousBottom = item.y + item.rectY + item.height;
+        });
+
+        const overflow = Math.max(0, previousBottom - 954);
+        eventLabels.forEach(item => {
+          item.label.setAttribute("transform", `translate(${item.x} ${item.y - overflow})`);
+        });
+      });
+    }
+
+    function renderRibbons() {
+      const ribbonLayer = document.getElementById("ribbons");
+      const pulseLayer = document.getElementById("pulses");
+      const taskLabelLayer = document.getElementById("task-labels");
+      const labelLayout = taskLabelLayout();
+      links.forEach((link, index) => {
+        const path = ribbonPath(link);
+        const ribbon = svgElement("path", {
+          d:path,
+          class:"flow-ribbon",
+          "data-event":link.event,
+          "data-from":link.fromOrg,
+          "data-to":link.toOrg,
+          "data-task":link.task,
+          "data-link-index":index,
+          style:`--ribbon-width:${link.weight}px`
+        });
+        const title = svgElement("title");
+        title.textContent = link.label;
+        ribbon.appendChild(title);
+        ribbonLayer.appendChild(ribbon);
+        pulseLayer.appendChild(svgElement("path", { d:path, class:"flow-pulse", "data-event":link.event, "data-link-index":index, style:`animation-delay:-${(index % 7) * .18}s` }));
+
+        const fullLabel = link.label;
+        const taskLabel = link.taskLabel || fullLabel;
+        const point = labelLayout.get(link);
+        if (!point) return;   // a ministry continuing: no label
+        const labelGroup = svgElement("g", {
+          class:"task-label",
+          transform:`translate(${point.x} ${point.y})`,
+          "data-event":link.event,
+          "data-task":link.task,
+          "data-link-index":index,
+          "aria-label":fullLabel,
+          style:`--label-delay:${(index % 8) * .055}s`
+        });
+        const labelTitle = svgElement("title");
+        labelTitle.textContent = fullLabel;
+        labelGroup.appendChild(labelTitle);
+        const labelShell = svgElement("g", { class:"task-label-shell" });
+        const labelRect = svgElement("rect", { x:-44, y:-15, width:88, height:30, rx:15 });
+        labelShell.appendChild(labelRect);
+        const labelText = svgElement("text", { x:0, y:1 });
+        labelText.textContent = taskLabel;
+        labelShell.appendChild(labelText);
+        labelGroup.appendChild(labelShell);
+        taskLabelLayer.appendChild(labelGroup);
+        const labelLines = wrapTaskLabel(labelText, taskLabel, 226);
+        const longestLine = Math.max(...[...labelText.querySelectorAll("tspan")].map(line => line.getComputedTextLength()));
+        const labelWidth = Math.min(258, Math.max(88, Math.ceil(longestLine + 32)));
+        const labelHeight = 30 + (labelLines.length - 1) * 18;
+        labelRect.setAttribute("x", -labelWidth / 2);
+        labelRect.setAttribute("width", labelWidth);
+        labelRect.setAttribute("y", -labelHeight / 2);
+        labelRect.setAttribute("height", labelHeight);
+      });
+      separateTaskLabels();
+    }
+
+    function renderNodes() {
+      const nodeLayer = document.getElementById("nodes");
+      nodes.forEach(node => {
+        const group = svgElement("g", {
+          class:`org-node${node.context ? " context" : ""}${node.merged ? " merged" : ""}`,
+          transform:`translate(${node.x} ${node.y})`,
+          "data-org":node.org,
+          "data-date":node.date,
+          tabindex:"0",
+          role:"button",
+          "aria-label":`${node.name}. ${node.meta}`
+        });
+        group.appendChild(svgElement("rect", { width:nodeWidth, height:nodeHeight, rx:14 }));
+        const foreign = svgElement("foreignObject", { x:12, y:10, width:nodeWidth - 24, height:nodeHeight - 18, "pointer-events":"none" });
+        const card = document.createElement("div");
+        card.setAttribute("xmlns", "http://www.w3.org/1999/xhtml");
+        card.innerHTML = `<p class="org-name">${node.name}</p><span class="org-meta">${node.meta}</span>`;
+        foreign.appendChild(card);
+        group.appendChild(foreign);
+        group.addEventListener("click", () => focusDate(node.date));
+        group.addEventListener("keydown", event => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            focusDate(node.date);
+          }
+        });
+        nodeLayer.appendChild(group);
+      });
+    }
+
+    function focusDate(date) {
+      const map = document.getElementById("flow-map");
+      const selected = dates.find(item => item.date === date);
+      const alreadySelected = map.dataset.focusDate === date;
+      clearTimeout(taskStepTimer);
+      document.querySelectorAll(".flow-ribbon, .flow-pulse, .org-node, .task-label").forEach(item => item.classList.remove("is-focused", "is-task-current"));
+      document.querySelectorAll("#timeline button").forEach(button => button.setAttribute("aria-pressed", "false"));
+
+      if (alreadySelected) {
+        delete map.dataset.focusDate;
+        map.classList.remove("event-focus");
+        document.getElementById("event-heading").textContent = "A teljes történet";
+        document.getElementById("event-description").textContent = "Egyetlen képen látszik a 2017-es szétágazás, az OKI kialakulása és a 2023-as NNGYK-egyesülés. Válassz egy évszámot a kapcsolódó utak kiemeléséhez.";
+        return;
+      }
+
+      map.dataset.focusDate = date;
+      map.classList.add("event-focus");
+      const markerX = dateXByDate.get(date);
+      document.getElementById("now-line").setAttribute("x1", markerX);
+      document.getElementById("now-line").setAttribute("x2", markerX);
+      document.getElementById("now-label").setAttribute("x", markerX);
+      document.querySelector(`#timeline button[data-date="${date}"]`).setAttribute("aria-pressed", "true");
+      document.querySelectorAll(`.flow-ribbon[data-event="${date}"], .flow-pulse[data-event="${date}"], .org-node[data-date="${date}"], .task-label[data-event="${date}"]`).forEach(item => item.classList.add("is-focused"));
+      const relatedIds = links.filter(link => link.event === date).flatMap(link => [link.from, link.to]);
+      relatedIds.forEach(id => {
+        const node = document.querySelector(`.org-node[aria-label^="${CSS.escape(nodeById.get(id).name)}"]`);
+        if (node) node.classList.add("is-focused");
+      });
+      document.getElementById("event-heading").textContent = `${selected.year} · ${selected.title}`;
+      document.getElementById("event-description").textContent = selected.description;
+      const eventCard = document.querySelector(".event-card");
+      eventCard.dataset.event = date;
+      eventCard.classList.remove("is-entering");
+      void eventCard.offsetWidth;
+      eventCard.classList.add("is-entering");
+      if (map.dataset.mode === "tasks" && map.dataset.motion === "true") {
+        startTaskStory(date);
+      } else if (map.dataset.mode === "tasks") {
+        showTaskSummary(date, true);
+      } else {
+        hideTaskSummary();
+      }
+    }
+
+    function taskLinksFor(date) {
+      return links.filter(link => link.event === date && link.fromOrg !== link.toOrg);
+    }
+
+    function showTaskStoryStep(date, index) {
+      const eventLinks = taskLinksFor(date);
+      const status = document.getElementById("task-story-status");
+      document.querySelectorAll(".flow-ribbon, .flow-pulse, .task-label").forEach(item => item.classList.remove("is-task-current"));
+      if (!eventLinks.length || index < 0 || index >= eventLinks.length) {
+        status.hidden = true;
+        return;
+      }
+      const link = eventLinks[index];
+      const linkIndex = links.indexOf(link);
+      document.querySelectorAll(`[data-link-index="${linkIndex}"]`).forEach(item => item.classList.add("is-task-current"));
+      document.getElementById("task-story-count").textContent = `${index + 1} / ${eventLinks.length}`;
+      document.getElementById("task-story-label").textContent = link.taskLabel || link.label;
+      status.hidden = false;
+    }
+
+    function hideTaskSummary() {
+      const summary = document.getElementById("task-summary");
+      const button = document.getElementById("task-summary-toggle");
+      const panel = document.getElementById("task-summary-panel");
+      summary.hidden = true;
+      button.setAttribute("aria-expanded", "false");
+      panel.hidden = true;
+    }
+
+    function showTaskSummary(date, enabled) {
+      const eventLinks = taskLinksFor(date);
+      const event = dates.find(item => item.date === date);
+      const summary = document.getElementById("task-summary");
+      const button = document.getElementById("task-summary-toggle");
+      const panel = document.getElementById("task-summary-panel");
+      document.getElementById("task-story-status").hidden = true;
+      if (!event || !eventLinks.length) {
+        hideTaskSummary();
+        return;
+      }
+      document.getElementById("flow-map").dataset.taskStory = "summary";
+      document.querySelectorAll(".flow-ribbon, .flow-pulse, .task-label").forEach(item => item.classList.remove("is-task-current"));
+      const targetCount = new Set(eventLinks.map(link => link.to)).size;
+      button.textContent = `${eventLinks.length} átadás ${targetCount} minisztériumhoz`;
+      button.disabled = !enabled;
+      button.setAttribute("aria-expanded", "false");
+      panel.hidden = true;
+      panel.replaceChildren();
+      const formattedDate = new Intl.DateTimeFormat("hu-HU", { dateStyle:"long" }).format(new Date(`${date}T12:00:00`));
+      eventLinks.forEach(link => {
+        const item = document.createElement("article");
+        item.className = "task-summary-item";
+        const title = document.createElement("strong");
+        title.textContent = link.taskLabel || link.label;
+        const route = document.createElement("span");
+        route.className = "task-summary-route";
+        route.textContent = `${nodeById.get(link.from).name} → ${nodeById.get(link.to).name}`;
+        const evidence = document.createElement("span");
+        evidence.className = "task-summary-evidence";
+        evidence.append(`${formattedDate} · `);
+        const source = document.createElement("a");
+        source.href = event.sourceUrl;
+        source.target = "_blank";
+        source.rel = "noreferrer";
+        source.textContent = event.source;
+        evidence.appendChild(source);
+        item.append(title, route, evidence);
+        panel.appendChild(item);
+      });
+      summary.hidden = false;
+    }
+
+    function toggleTaskSummary() {
+      const button = document.getElementById("task-summary-toggle");
+      if (button.disabled) return;
+      const panel = document.getElementById("task-summary-panel");
+      const expanded = button.getAttribute("aria-expanded") !== "true";
+      button.setAttribute("aria-expanded", String(expanded));
+      panel.hidden = !expanded;
+    }
+
+    function startTaskStory(date) {
+      clearTimeout(taskStepTimer);
+      const map = document.getElementById("flow-map");
+      const eventLinks = taskLinksFor(date);
+      if (map.dataset.mode !== "tasks" || !eventLinks.length) {
+        delete map.dataset.taskStory;
+        document.getElementById("task-story-status").hidden = true;
+        hideTaskSummary();
+        return;
+      }
+      hideTaskSummary();
+      map.dataset.taskStory = "playing";
+      taskStepIndex = 0;
+      showTaskStoryStep(date, taskStepIndex);
+      const advance = () => {
+        if (map.dataset.motion !== "true" || map.dataset.focusDate !== date) return;
+        taskStepIndex += 1;
+        if (taskStepIndex >= eventLinks.length) {
+          delete map.dataset.taskStory;
+          showTaskSummary(date, false);
+          return;
+        }
+        showTaskStoryStep(date, taskStepIndex);
+        taskStepTimer = setTimeout(advance, taskStepMs);
+      };
+      taskStepTimer = setTimeout(advance, taskStepMs);
+    }
+
+    function setMode(mode) {
+      const taskMode = mode === "tasks";
+      document.getElementById("flow-map").dataset.mode = mode;
+      document.getElementById("organisation-mode").setAttribute("aria-pressed", String(!taskMode));
+      document.getElementById("task-mode").setAttribute("aria-pressed", String(taskMode));
+      document.getElementById("mode-summary").innerHTML = taskMode
+        ? "<strong>Feladatátadások.</strong> Hány feladat ment át, és főleg milyen funkcióval."
+        : "<strong>Szervezeti folytonosság.</strong> Melyik minisztériumból mi lett.";
+      if (taskMode && document.getElementById("flow-map").dataset.motion === "true") {
+        startTaskStory(document.getElementById("flow-map").dataset.focusDate);
+      } else if (taskMode) {
+        showTaskSummary(document.getElementById("flow-map").dataset.focusDate, true);
+      } else if (!taskMode) {
+        clearTimeout(taskStepTimer);
+        delete document.getElementById("flow-map").dataset.taskStory;
+        document.getElementById("task-story-status").hidden = true;
+        hideTaskSummary();
+      }
+    }
+
+    function toggleMotion() {
+      const map = document.getElementById("flow-map");
+      const button = document.getElementById("motion-toggle");
+      const isRunning = map.dataset.motion !== "true";
+      map.dataset.motion = String(isRunning);
+      button.setAttribute("aria-pressed", String(isRunning));
+      button.textContent = isRunning ? "Ⅱ Szünet" : "▶ Folytatás";
+      if (isRunning) {
+        startTaskStory(map.dataset.focusDate);
+        scheduleNextEvent();
+      } else {
+        clearTimeout(storyTimer);
+        clearTimeout(taskStepTimer);
+        delete map.dataset.taskStory;
+        showTaskSummary(map.dataset.focusDate, true);
+      }
+    }
+
+    function pausePlayback() {
+      const map = document.getElementById("flow-map");
+      const button = document.getElementById("motion-toggle");
+      clearTimeout(storyTimer);
+      clearTimeout(taskStepTimer);
+      map.dataset.motion = "false";
+      button.setAttribute("aria-pressed", "false");
+      button.textContent = "▶ Folytatás";
+      delete map.dataset.taskStory;
+      if (map.dataset.mode === "tasks") showTaskSummary(map.dataset.focusDate, true);
+    }
+
+    function selectDateManually(date) {
+      pausePlayback();
+      storyIndex = dates.findIndex(item => item.date === date);
+      focusDate(date);
+    }
+
+    function stepStory(direction) {
+      pausePlayback();
+      storyIndex = (storyIndex + direction + dates.length) % dates.length;
+      focusDate(dates[storyIndex].date);
+    }
+
+    function scheduleNextEvent() {
+      clearTimeout(storyTimer);
+      const activeTaskCount = document.getElementById("flow-map").dataset.mode === "tasks"
+        ? taskLinksFor(dates[storyIndex].date).length
+        : 0;
+      const dwell = Math.max(storyDwellMs, activeTaskCount * taskStepMs + 1300);
+      storyTimer = setTimeout(() => {
+        storyIndex = (storyIndex + 1) % dates.length;
+        focusDate(dates[storyIndex].date);
+        scheduleNextEvent();
+      }, dwell);
+    }
+
+    function setTaskSpeed(speed) {
+      taskStepMs = taskStepDurations[speed] || taskStepDurations.calm;
+      const map = document.getElementById("flow-map");
+      if (map.dataset.mode === "tasks" && map.dataset.motion === "true") {
+        startTaskStory(map.dataset.focusDate);
+        scheduleNextEvent();
+      }
+    }
+
+    function startAutoplay() {
+      const map = document.getElementById("flow-map");
+      const button = document.getElementById("motion-toggle");
+      map.dataset.motion = "true";
+      button.setAttribute("aria-pressed", "true");
+      button.textContent = "Ⅱ Szünet";
+      scheduleNextEvent();
+    }
+
+    renderTimeline();
+    renderGuides();
+    renderRibbons();
+    renderNodes();
+    if (window.FILTER_FOCUS) {
+      storyIndex = dates.findIndex(item => item.date === window.FILTER_FOCUS);
+      setMode("tasks");
+      focusDate(window.FILTER_FOCUS);
+    } else {
+      focusDate(dates[0].date);
+      startAutoplay();
+    }
+    document.getElementById("organisation-mode").addEventListener("click", () => setMode("organisations"));
+    document.getElementById("task-mode").addEventListener("click", () => setMode("tasks"));
+    document.getElementById("task-speed").addEventListener("change", event => setTaskSpeed(event.target.value));
+    document.getElementById("motion-toggle").addEventListener("click", toggleMotion);
+    document.getElementById("previous-event").addEventListener("click", () => stepStory(-1));
+    document.getElementById("next-event").addEventListener("click", () => stepStory(1));
+    document.getElementById("task-summary-toggle").addEventListener("click", toggleTaskSummary);
+  </script>
+</body>
+</html>
