@@ -306,6 +306,7 @@ window.SzmszView = (() => {
     $('right').innerHTML = `<div class="crumbs">${esc(orgName(d.org))} › <a href="#" data-szmsz="${d.id}">${esc(d.title)}</a> (${esc(period(d))})${path.slice(0, -1).map(p => ` › <a href="#" data-szmsz="${p.id}">${esc(p.name)}</a>`).join('')}</div>` +
       `<h1>${esc(u.number)} ${esc(u.name)}</h1>` +
       (same.length > 1 ? `<div class="bridge-bar"><span class="bridge-lbl">Ugyanez az egység más SZMSZ-ekben:</span>${same.map(v => `<a href="#" class="chip${v === u ? ' disp' : ''}" data-szmsz="${v.id}">${esc(period(docs[v.doc]))} · ${v.total}</a>`).join('')}</div>` : '') +
+      (D.refs && D.refs[u.i] ? `<div class="note"><b>Hivatkozott szöveg (${esc(D.refs[u.i].cite)}):</b> az egység feladatait az SZMSZ erre a §-ra bízza; a hivatkozott §, szó szerint, a tárgyi SZMSZ-ből:<ul>${D.refs[u.i].texts.map(t => `<li>${esc(t)}</li>`).join('')}</ul></div>` : '') +
       `<h2 class="sec"><span>Saját feladatok (${own.length})</span></h2>` +
       (own.length ? `<ol class="tasks">${own.map(taskLine).join('')}</ol>` : '<p class="empty-msg">Az egységnek nincs saját feladat-tétele; az alárendelt egységeké lent.</p>') +
       (u.children.length ? `<h2 class="sec"><span>Alárendelt egységek (${u.children.length})</span></h2><ul>${u.children.map(c => `<li><a href="#" data-szmsz="${c.id}">${esc(c.number)} ${esc(c.name)}</a> · ${c.total}</li>`).join('')}</ul>` : '');
