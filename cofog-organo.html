@@ -34,6 +34,12 @@
     mark { background: #ffe9a8; color: inherit; border-radius: 2px; }
     .node.sel mark { background: #e3b94c; color: #17342c; }
     .right { overflow: auto; padding: 22px 28px 60px; min-width: 0; }
+    /* narrow window: the two panes stack (the list on top, the detail below) instead of squeezing the detail to 56 px */
+    @media (max-width: 760px) {
+      .shell { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 42%) minmax(0, 1fr); }
+      .left { border-right: 0; border-bottom: 1px solid var(--line); }
+      .right { padding: 16px 14px 48px; }
+    }
     .crumbs { color: var(--muted); font-size: .86rem; margin-bottom: 4px; }
     .right h1 { font-size: clamp(1.4rem, 2.4vw, 2rem); margin-bottom: 10px; }
     .note { padding: 10px 13px; border-left: 3px solid var(--amber); background: var(--amber-soft); color: #5b3b0a; font-size: .9rem; margin: 12px 0; }
@@ -629,7 +635,7 @@
       `${(D.threads || []).length} rendeleti hatásköri tárgykör (${multiCnt} több szövegváltozatból összefűzve); a feladatok a minisztériumok kiadáskori SZMSZ-eiből. ` +
       `Hatásköri adatok: ${esc(D.generated)}. Prototípus: a számok és a besorolások ellenőrzött mintákon mértek, nem jogi megállapítások.</details>` +
       `<details class="more"><summary>Mit jelentenek a szavak?</summary><b>Feladatfonal</b>: ugyanaz a feladat az egymást követő SZMSZ-ekben és minisztériumokban végigkövetve. ` +
-      `<b>Átadás</b>: egy feladat szövege kikerül egy minisztérium SZMSZ-éből, és legfeljebb 400 nap múlva egy másikéban megjelenik. ` +
+      `<b>Átadás</b>: egy feladat szövege kikerül egy minisztérium SZMSZ-éből, és legfeljebb 400 nap múlva egy másikéban megjelenik; a dátum az SZMSZ-ek kiadásából következik (az SZMSZ-módosítások nincsenek alkalmazva), a tényleges jogi átadás napját külön forrás igazolja. ` +
       `<b>COFOG-kód</b>: a kormányzati funkció 6 jegyű kódja (15/2019. (XII. 7.) PM rendelet).</details></div>`;
     // the header's chart link follows the selection (a function, or a task thread with transfers), and says so
     // The selection is also kept in the address (#code=… or #thread=…), so the chart's back link returns to it.

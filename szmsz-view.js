@@ -284,12 +284,12 @@ window.SzmszView = (() => {
     $('right').innerHTML = `<div class="crumbs">Szervezet</div><h1>${esc(orgName(org))}</h1>` +
       `<div class="crumbs">${ds.length} SZMSZ a HLex-ben · ${ds.reduce((s, d) => s + d.taskCount, 0)} feladat-előfordulás · az utolsó SZMSZ hatálya „máig”, amíg a HLex nem ismer újabbat</div>` +
       `${axis}<div class="org"><div class="osum"><div class="name">SZMSZ-ek</div><div class="bar">${ds.map((d, k) => seg({ from: d.from, until: d.until, label: `${d.title} · ${period(d)}` }, k)).join('')}</div></div></div>` +
-      `<table class="det"><tr><th>SZMSZ</th><th>Hatály</th><th>Kibocsátó</th><th>Egység</th><th>Feladat</th></tr>` +
+      `<table class="det"><tr><th>SZMSZ</th><th>SZMSZ-időszak</th><th>Kibocsátó</th><th>Egység</th><th>Feladat</th></tr>` +
       ds.map(d => `<tr><td><a href="#" data-szmsz="${d.id}">${esc(d.title)}</a></td><td style="white-space:nowrap">${esc(period(d))}</td><td>${esc(d.issuer)}</td><td>${d.units.length}</td><td>${d.taskCount}</td></tr>`).join('') + '</table>';
   }
   function showDoc(d) {
     $('right').innerHTML = `<div class="crumbs">${esc(orgName(d.org))}</div><h1>${esc(d.title)}</h1>` +
-      `<div class="crumbs">Hatály: ${esc(period(d))} · kibocsátó: ${esc(d.issuer)} · HLex: ${esc(d.njt)}</div>` +
+      `<div class="crumbs">SZMSZ-időszak (a kiadáskori szöveg, módosítások nélkül): ${esc(period(d))} · kibocsátó: ${esc(d.issuer)} · HLex: ${esc(d.njt)}</div>` +
       `<h2 class="sec"><span>Szervezeti egységek (${d.units.length}) és feladataik (${d.taskCount})</span></h2>` +
       `<table class="det"><tr><th>Szám</th><th>Egység</th><th>Feladat (alatta lévőkkel)</th></tr>` +
       d.units.map(u => `<tr><td>${esc(u.number)}</td><td style="padding-left:${14 + 14 * (unitPath(u).length - 1)}px"><a href="#" data-szmsz="${u.id}">${esc(u.name)}</a></td><td>${u.total}</td></tr>`).join('') + '</table>';
@@ -344,7 +344,7 @@ window.SzmszView = (() => {
       runs.push({ code: u.code, org: d.org, from: d.from, until: d.until, disputed: u.status === 'vitatott' });
     }
     const funcHtml = runs.map(r => `${codeLink(r.code)}${r.disputed ? ' <span class="flag">vitatott</span>' : ''} <span class="sub-holder">(${esc(yr(r.from))}–${esc(yr(r.until))}, ${esc(orgName(r.org))})</span>`).join(' → ');
-    const transfers = th.transfers.length ? `<h2 class="sec"><span>Átadás (${th.transfers.length})</span><span class="sub-hint">az átadónál a szöveg kikerül az SZMSZ-ből, az átvevőnél ugyanekkor megjelenik</span></h2>` +
+    const transfers = th.transfers.length ? `<h2 class="sec"><span>Szövegvándorlás szervezetek között (${th.transfers.length})</span><span class="sub-hint">az SZMSZ-ek szövegéből következik (nem a tényleges jogi átadás napja): az átadónál a szöveg kikerül, az átvevőnél ugyanekkor megjelenik</span></h2>` +
       `<div class="tiles"><a class="tile main" data-chart-link href="szmsz-transfer-overview.html"><b>Ennek a feladatnak az útja az ábrán →</b><span>Az átadások ábrája csak erre a feladatra szűrve; onnan egy kattintással az összkép.</span></a></div>` +
       `<table class="det"><tr><th>Mikor</th><th>Honnan</th><th>Hová</th><th>Csomag</th></tr>${th.transfers.map(x => {
         const p = x.pkg, ua = units[x.a.unit], ub = units[x.b.unit];
