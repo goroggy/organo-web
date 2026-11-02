@@ -564,7 +564,9 @@
     #flow-map[data-mode="tasks"] .flow-ribbon[data-task="cont"] { stroke: #b9c3bf; opacity: .35; }
     .filter-banner { margin: 0; padding: 10px 28px; background: #fff4d6; border-bottom: 1px solid #e8d49a; }
     .filter-banner a { margin-left: 8px; font-weight: 700; }
+    .org-node.muted { opacity: .32; }
   </style>
+  <link rel="icon" href="logo.svg" type="image/svg+xml">
 </head>
 <body>
   <div class="page-shell">
@@ -573,7 +575,7 @@
         <p class="eyebrow">SZMSZ-feladatátadások · áttekintő nézet</p>
         <h1>Feladatátadások a minisztériumok között, SZMSZ-ek alapján</h1>
       </div>
-      <a class="detail-link" href="cofog-organo.html">← Vissza a nézegetőbe</a>
+      <a class="detail-link" href="cofog-organo.html">← Vissza a keresőbe</a>
     </header>
 
     <section class="map-shell" aria-labelledby="mode-summary">
@@ -653,11 +655,16 @@
     (() => {
       const params = new URLSearchParams(location.search);
       const code = params.get("code"), thread = params.get("thread");
+      // back to the viewer with its selection: from the filter itself, or carried through the overview (?back=)
+      const back = code ? "code=" + encodeURIComponent(code) : thread ? "thread=" + encodeURIComponent(thread) : params.get("back");
+      const backLink = document.querySelector("a.detail-link");   // the header is above this script
+      if (backLink && back) backLink.href = "cofog-organo.html#" + back;
       if (!code && !thread) return;
       const name = params.get("name") || (code ? "COFOG " + code : "a kiválasztott feladat");
       const kept = [];
       for (const link of links) {
-        if (link.task === "cont") { kept.push(link); continue; }
+        // filtered, only the selected transfers flow: the ministries' own continuity is not drawn
+        if (link.task === "cont") continue;
         const n = thread ? (link.threads.includes(+thread) ? 1 : 0)
           : Object.entries(link.codes).reduce((sum, [c, k]) => sum + (c.startsWith(code) ? k : 0), 0);
         if (!n) continue;
@@ -669,8 +676,15 @@
       }
       links.length = 0;
       links.push(...kept);
-      const moved = links.filter(link => link.task !== "cont");
+      const moved = links;
+      // only the ministries a selected transfer leaves or reaches stand out; the rest is the faded frame
+      const involved = new Set(moved.flatMap(link => [link.from, link.to]));
+      for (const node of nodes) {
+        node.merged = moved.some(link => link.to === node.id);
+        node.muted = !involved.has(node.id);
+      }
       window.FILTER_FOCUS = (moved[0] || {}).event;
+      window.FILTER_EMPTY = !moved.length;
       dates.slice(1).forEach(item => {
         const here = moved.filter(link => link.event === item.date);
         const total = here.reduce((sum, link) => sum + link.n, 0);
@@ -681,7 +695,8 @@
       banner.className = "filter-banner";
       banner.innerHTML = (moved.length
         ? "Csak <b></b> átadásai: " + moved.length + " szalag. "
-        : "<b></b>: a vizsgált időszakban nincs bekötött átadás. ") + "<a href='szmsz-transfer-overview.html'>Összkép →</a>";
+        : "<b></b>: a vizsgált időszakban nincs bekötött átadás, ezért az ábrán nincs szalag. ") +
+        "<a href='szmsz-transfer-overview.html?back=" + encodeURIComponent(back) + "'>Összkép →</a>";
       banner.querySelector("b").textContent = name;
       document.querySelector("header.topbar").after(banner);
     })();
@@ -893,7 +908,7 @@
       const nodeLayer = document.getElementById("nodes");
       nodes.forEach(node => {
         const group = svgElement("g", {
-          class:`org-node${node.context ? " context" : ""}${node.merged ? " merged" : ""}`,
+          class:`org-node${node.context ? " context" : ""}${node.merged ? " merged" : ""}${node.muted ? " muted" : ""}`,
           transform:`translate(${node.x} ${node.y})`,
           "data-org":node.org,
           "data-date":node.date,
@@ -1176,7 +1191,7 @@
       focusDate(window.FILTER_FOCUS);
     } else {
       focusDate(dates[0].date);
-      startAutoplay();
+      if (!window.FILTER_EMPTY) startAutoplay();   // nothing selected moved: no animation
     }
     document.getElementById("organisation-mode").addEventListener("click", () => setMode("organisations"));
     document.getElementById("task-mode").addEventListener("click", () => setMode("tasks"));

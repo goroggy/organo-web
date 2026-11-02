@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ORGANO – Feladat és szervezet</title>
   <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="logo.svg" type="image/svg+xml">
   <style>
     body.cofog-organo { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
     .shell { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(340px, 30%) minmax(0, 1fr); gap: 0; }
@@ -91,6 +92,11 @@
                     border-bottom: 2px solid transparent; margin-bottom: -1px; font: inherit; }
     .ptabs button.on { color: var(--green); border-bottom-color: var(--green); font-weight: 600; }
     .ptabs button small { color: var(--muted); font-weight: 400; }
+    .ptab-chart { margin-left: auto; align-self: center; padding: 6px 12px; border-radius: 16px; background: var(--green);
+                  color: #fff !important; text-decoration: none; font-weight: 600; font-size: .9rem; white-space: nowrap; }
+    .ptab-chart:hover { filter: brightness(1.12); }
+    .title-row { display: flex; align-items: flex-start; gap: 12px; }
+    .title-row h1 { flex: 1; }
     .summary-line { color: var(--muted); margin: 2px 0 0; }
     details.more { margin: 10px 0; border-top: 1px solid var(--line); padding-top: 6px; font-size: .86rem; color: var(--muted); }
     details.more > summary { cursor: pointer; color: var(--green); font-weight: 600; }
@@ -99,7 +105,7 @@
 </head>
 <body class="cofog-organo">
   <header class="topbar">
-    <a class="brand" href="cofog-organo.html">ORGANO</a>
+    <a class="brand" href="cofog-organo.html"><img src="logo.svg" alt="" width="30" height="30" style="vertical-align:middle;margin-right:10px">ORGANO</a>
     <div class="scope">Feladat és szervezet</div>
     <nav class="topnav">
       <a href="#" id="navHome">Kezdőlap</a>
@@ -436,8 +442,10 @@
     }
 
     // a page's sections behind tabs: the first one open, the others one click away (one tab bar per page)
+    // the chart button at the end of the tab bar: organoChartFilter points it at the chart filtered to the selection
     function pageTabs(tabs) {
-      return `<div class="ptabs">${tabs.map((t, i) => `<button type="button" class="${i ? '' : 'on'}" data-ptab="${i}">${t[0]}</button>`).join('')}</div>` +
+      return `<div class="ptabs">${tabs.map((t, i) => `<button type="button" class="${i ? '' : 'on'}" data-ptab="${i}">${t[0]}</button>`).join('')}` +
+        `<a class="ptab-chart" data-chart-link href="szmsz-transfer-overview.html">Átadások ábrája ↗</a></div>` +
         tabs.map((t, i) => `<div class="ppanel" data-ppanel="${i}"${i ? ' hidden' : ''}>${t[1]}</div>`).join('');
     }
     $('right').addEventListener('click', e => {
@@ -464,9 +472,6 @@
             : '<p class="empty-msg">Ehhez a funkcióhoz nincs rendeleti hatásköri tárgykör.</p>'],
           ['SZMSZ-feladatok', `<h2 class="sec"><span>SZMSZ-feladatfonalak</span><span class="sub-hint">azok a feladatok, amelyeknek valamely változata e kód alatt állt, az itt töltött évekkel; ha a fonal mentén változik a kód, az jelezve van, nem elszavazva</span></h2>` +
             `<div id="szmszThreads" data-code="${esc(n.code)}"><p class="empty-msg">Az SZMSZ-feladatok betöltése…</p></div>`],
-          ['Átadások', `<div class="tiles"><a class="tile main" href="szmsz-transfer-overview.html?code=${encodeURIComponent(n.code)}&name=${encodeURIComponent(n.code + ' ' + n.label)}">` +
-            `<b>E funkció feladatainak átadásai az ábrán →</b><span>Melyik minisztériumtól melyikhez kerültek a(z) ${esc(n.code)} kód alá tartozó SZMSZ-feladatok, átszervezési körönként. Onnan egy kattintással az összkép.</span></a></div>` +
-            `<p class="summary-line">A feladat kódja a feladatszintű besorolás, ahol van, különben az őt tartó egység kódja. Az egyes feladatok átadásai az „SZMSZ-feladatok” fülön, a feladat oldalán is látszanak.</p>`],
           [`SZMSZ-egységek <small>${unitCount}</small>`, unitSection(units)],
           ['Mit tartalmaz?', explBlock(n)],
         ]);
@@ -626,13 +631,24 @@
       `<b>Átadás</b>: egy feladat szövege kikerül egy minisztérium SZMSZ-éből, és legfeljebb 400 nap múlva egy másikéban megjelenik. ` +
       `<b>COFOG-kód</b>: a kormányzati funkció 6 jegyű kódja (15/2019. (XII. 7.) PM rendelet).</details></div>`;
     // the header's chart link follows the selection (a function, or a task thread with transfers), and says so
+    // The selection is also kept in the address (#code=… or #thread=…), so the chart's back link returns to it.
     window.organoChartFilter = f => {
       const a = $('navChart');
-      if (!f) { a.href = 'szmsz-transfer-overview.html'; a.textContent = 'Átadások ábrája'; a.title = 'Az összes átadás'; return; }
-      const q = f.code ? 'code=' + encodeURIComponent(f.code) : 'thread=' + encodeURIComponent(f.thread);
-      a.href = 'szmsz-transfer-overview.html?' + q + '&name=' + encodeURIComponent(f.name);
-      a.textContent = 'Átadások ábrája: ' + (f.code ? f.code : 'ez a feladat');
-      a.title = 'Az ábra a kiválasztásra szűrve: ' + f.name + ' (onnan egy kattintással az összkép)';
+      const q = f ? (f.code ? 'code=' + encodeURIComponent(f.code) : 'thread=' + encodeURIComponent(f.thread)) : '';
+      history.replaceState(null, '', q ? '#' + q : location.pathname + location.search);
+      const href = q ? 'szmsz-transfer-overview.html?' + q + '&name=' + encodeURIComponent(f.name) : 'szmsz-transfer-overview.html';
+      a.href = href;
+      a.textContent = q ? 'Átadások ábrája: ' + (f.code ? f.code : 'ez a feladat') : 'Átadások ábrája';
+      a.title = q ? 'Az ábra a kiválasztásra szűrve: ' + f.name + ' (onnan egy kattintással az összkép)' : 'Az összes átadás';
+      // the prominent button next to the page's tabs leads to the same filtered chart
+      document.querySelectorAll('a[data-chart-link]').forEach(b => { b.href = href; b.title = a.title; b.hidden = !q; });
+    };
+    // restores a selection from the address: the chart's back link, or a shared link
+    const restoreFromHash = () => {
+      const h = new URLSearchParams(location.hash.slice(1));
+      if (h.get('code') && cofog.byCode.has(h.get('code'))) { open.clear(); select(h.get('code'), 'cofog'); return true; }
+      if (h.get('thread')) { mode = 'szmsz'; selected = null; markTabs(); window.SzmszView.openThread(+h.get('thread')); return true; }
+      return false;
     };
     const showStart = () => { $('right').innerHTML = window.organoStartPage(mode); window.organoChartFilter(null); };
     const setMode = m => { mode = m; selected = null; markTabs(); window.organoChartFilter(null);
@@ -648,7 +664,7 @@
       if (where === 'P') { mode = 'szmsz'; selected = null; markTabs(); window.SzmszView.openKey('P'); return; }
       setMode(where);
     }, true);
-    showStart();
+    if (!restoreFromHash()) showStart();
     renderTree();
   })();
   </script>

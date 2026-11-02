@@ -282,7 +282,7 @@ window.SzmszView = (() => {
       return `<tr><td style="white-space:nowrap">${esc(yr(d.from))}–${esc(yr(d.until))}</td><td><b>${esc(orgName(d.org))}</b><div class="sub-holder"><a href="#" data-szmsz="${u.id}">${esc(u.number)} ${esc(u.name)}</a>${u.code ? ` · ${esc(u.code)}` : ''}</div></td><td>${mark}${cell}</td></tr>`;
     }).join('');
     $('right').innerHTML = `<div class="crumbs">Feladatfonal · ${esc(span(th))} · ${th.docs.length} SZMSZ · ${th.orgs.length} szervezet</div>` +
-      `<h1>${hl(th.text)}</h1>` +
+      `<div class="title-row"><h1>${hl(th.text)}</h1>${th.transfers.length ? '<a class="ptab-chart" data-chart-link href="szmsz-transfer-overview.html">Átadások ábrája ↗</a>' : ''}</div>` +
       `<div class="crumbs">Funkció változatonként, az egység besorolása szerint: ${funcHtml}${th.codes.length > 1 ? ' ' + CODE_CHANGES : ''}</div>` +
       taskCodeHtml(th.tcode) +
       `<h2 class="sec"><span>Szervezetek és időszakok</span><span class="sub-hint">ahol az SZMSZ ezt a feladatot tartalmazza</span></h2>${axis}${orgHtml}` + transfers +

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="ORGANO">
+  <title>ORGANO</title>
+  <!-- two columns of organisations (rounded bars) and the tasks flowing between them: one splits, two merge -->
+  <rect width="64" height="64" rx="14" fill="#17342c"/>
+  <path d="M17 15 C 32 15, 32 13, 47 13" fill="none" stroke="#7fd3a8" stroke-width="5" stroke-linecap="round" opacity=".95"/>
+  <path d="M17 18 C 32 18, 32 31, 47 31" fill="none" stroke="#f0b35e" stroke-width="4" stroke-linecap="round" opacity=".95"/>
+  <path d="M17 33 C 32 33, 32 34, 47 34" fill="none" stroke="#7fd3a8" stroke-width="5" stroke-linecap="round" opacity=".95"/>
+  <path d="M17 48 C 32 48, 32 37, 47 37" fill="none" stroke="#8fc0e8" stroke-width="4" stroke-linecap="round" opacity=".95"/>
+  <rect x="9" y="10" width="8" height="12" rx="3" fill="#ffffff"/>
+  <rect x="9" y="28" width="8" height="10" rx="3" fill="#ffffff"/>
+  <rect x="9" y="43" width="8" height="10" rx="3" fill="#ffffff"/>
+  <rect x="47" y="9" width="8" height="9" rx="3" fill="#ffffff"/>
+  <rect x="47" y="26" width="8" height="15" rx="3" fill="#ffffff"/>
+</svg>
