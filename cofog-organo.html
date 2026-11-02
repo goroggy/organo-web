@@ -99,11 +99,11 @@
 </head>
 <body class="cofog-organo">
   <header class="topbar">
-    <a class="brand" href="termeszetvedelem.html">ORGANO</a>
+    <a class="brand" href="cofog-organo.html">ORGANO</a>
     <div class="scope">Feladat és szervezet</div>
     <nav class="topnav">
       <a href="#" id="navHome">Kezdőlap</a>
-      <a href="szmsz-transfer-overview.html">Átadások ábrája</a>
+      <a href="szmsz-transfer-overview.html" id="navChart">Átadások ábrája</a>
       <a href="public-health-overview.html">Népegészségügyi példa</a>
     </nav>
   </header>
@@ -575,6 +575,7 @@
       selected = code;
       for (let p = n; p; p = p.parent ? current().byCode.get(p.parent) : null) if (p !== n) open.add(p.code);
       mode === 'cofog' ? showCofog(n) : showNace(n);
+      window.organoChartFilter(mode === 'cofog' ? { code: n.code, name: n.code + ' ' + n.label } : null);
       renderTree();
     }
 
@@ -624,8 +625,17 @@
       `<details class="more"><summary>Mit jelentenek a szavak?</summary><b>Feladatfonal</b>: ugyanaz a feladat az egymást követő SZMSZ-ekben és minisztériumokban végigkövetve. ` +
       `<b>Átadás</b>: egy feladat szövege kikerül egy minisztérium SZMSZ-éből, és legfeljebb 400 nap múlva egy másikéban megjelenik. ` +
       `<b>COFOG-kód</b>: a kormányzati funkció 6 jegyű kódja (15/2019. (XII. 7.) PM rendelet).</details></div>`;
-    const showStart = () => { $('right').innerHTML = window.organoStartPage(mode); };
-    const setMode = m => { mode = m; selected = null; markTabs();
+    // the header's chart link follows the selection (a function, or a task thread with transfers), and says so
+    window.organoChartFilter = f => {
+      const a = $('navChart');
+      if (!f) { a.href = 'szmsz-transfer-overview.html'; a.textContent = 'Átadások ábrája'; a.title = 'Az összes átadás'; return; }
+      const q = f.code ? 'code=' + encodeURIComponent(f.code) : 'thread=' + encodeURIComponent(f.thread);
+      a.href = 'szmsz-transfer-overview.html?' + q + '&name=' + encodeURIComponent(f.name);
+      a.textContent = 'Átadások ábrája: ' + (f.code ? f.code : 'ez a feladat');
+      a.title = 'Az ábra a kiválasztásra szűrve: ' + f.name + ' (onnan egy kattintással az összkép)';
+    };
+    const showStart = () => { $('right').innerHTML = window.organoStartPage(mode); window.organoChartFilter(null); };
+    const setMode = m => { mode = m; selected = null; markTabs(); window.organoChartFilter(null);
       if (m === 'szmsz') return window.SzmszView.load(() => window.SzmszView.activate(query));
       showStart(); renderTree(); };
     $('tabCofog').onclick = () => setMode('cofog'); $('tabNace').onclick = () => setMode('nace'); $('tabSzmsz').onclick = () => setMode('szmsz');

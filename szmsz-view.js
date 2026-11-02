@@ -391,6 +391,11 @@ window.SzmszView = (() => {
     } else if (key.startsWith('d')) open.add('o:' + docs[+key.slice(1)].org);
     show(key); renderTree();
     $('right').scrollTop = 0;
+    // the header's chart link follows the selection: a task thread filters the chart to its transfers
+    if (window.organoChartFilter) {
+      const th = key.startsWith('f') ? threads[+key.slice(1)] : null;
+      window.organoChartFilter(th && th.transfers.length ? { thread: key.slice(1), name: '„' + (th.text.length > 70 ? th.text.slice(0, 70) + '…' : th.text) + '”' } : null);
+    }
   }
 
   return {
