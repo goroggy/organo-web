@@ -60,34 +60,85 @@ window.SzmszView = (() => {
     }
     folded = null;
   }
-  // folding 74k texts takes a moment; done once, on the first search
+  // the search texts are made once, on the first search: lower-cased (for the lemma forms, which keep their accents)
+  // and folded (lower-cased, accents removed: for a query typed without accents)
+  let lowered = null;
   function ensureFolded() {
     if (folded) return;
-    const strFold = D.str.map(fold);
-    folded = tasks.map((t, k) => strFold[D.tasks[3 * k + 1]] + ' ' + (D.tasks[3 * k + 2] < 0 ? '' : strFold[D.tasks[3 * k + 2]]) + ' ' + fold(units[t.unit].name));
+    const strLow = D.str.map(s => String(s ?? '').toLowerCase()), strFold = strLow.map(fold);
+    const join = (arr, k, name) => arr[D.tasks[3 * k + 1]] + ' ' + (D.tasks[3 * k + 2] < 0 ? '' : arr[D.tasks[3 * k + 2]]) + ' ' + name;
+    lowered = tasks.map((t, k) => join(strLow, k, units[t.unit].name.toLowerCase()));
+    folded = tasks.map((t, k) => join(strFold, k, fold(units[t.unit].name)));
   }
   const orgName = o => D.orgs[o] || o;
   const yr = s => (s ? s.slice(0, 4) : '');
   const period = d => `${d.from} – ${d.until || 'máig'}`;
   const docsOf = org => docs.filter(d => d.org === org).sort((a, b) => a.from.localeCompare(b.from));
   // A query is words, not a phrase: 'bizonyítékok beszerzése' finds '… a szükséges bizonyítékok beszerzéséről'. Every
-  // word of three letters or more must start a word of the text; a long word loses its last three letters first,
-  // so a case ending or a possessive does not stop it. "…" in quotes is an exact phrase, as before.
+  // word of three letters or more must occur in the text in some form of the same lemma: D.lem (szmsz_lemmas.py,
+  // huspacy) groups the corpus's words by lemma, so 'beszerzése' stands for 'beszerzés', 'beszerzéséről' … The forms
+  // keep their accents: folded, 'szamarak' would lose its last letter into 'szamara', which is 'számára'. A form the
+  // corpus does not have is cut back by known endings to a lemma it has ('beszerzésére' -> 'beszerzés'); a word it
+  // has in no form matches only words that begin with it. A query typed without accents matches the folded text by
+  // word beginnings. "…" in quotes is an exact phrase.
   const escRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const LETTER = 'a-záéíóöőúüű0-9';
+  let lemmaOf = null, formsOf = null;
+  function ensureLemmas() {
+    if (lemmaOf) return;
+    lemmaOf = new Map(); formsOf = new Map();
+    for (const [lemma, words] of Object.entries(D.lem || {})) {
+      const forms = formsOf.get(lemma) || new Set([lemma]);
+      for (const w of words.split(' ')) { lemmaOf.set(w, lemma); forms.add(w); }
+      formsOf.set(lemma, forms);
+    }
+  }
+  const SUFFIXES = ['ból', 'ből', 'tól', 'től', 'ról', 'ről', 'nál', 'nél', 'nak', 'nek', 'val', 'vel', 'hoz', 'hez',
+    'höz', 'ért', 'ként', 'ig', 'ban', 'ben', 'ba', 'be', 'ra', 're', 'on', 'en', 'ön', 'n', 'at', 'et', 'ot', 'öt', 't',
+    'ai', 'ei', 'i', 'ja', 'je', 'a', 'e', 'á', 'é', 'ak', 'ek', 'ok', 'ök', 'k'];
+  function knownStem(w) {
+    let frontier = [w];
+    for (let depth = 0; depth < 3; depth++) {
+      const next = [];
+      for (const word of frontier)
+        for (const s of SUFFIXES)
+          if (word.endsWith(s) && word.length - s.length >= 3) {
+            const rest = word.slice(0, -s.length);
+            if (formsOf.has(rest)) return rest;
+            if (lemmaOf.has(rest)) return lemmaOf.get(rest);
+            // a lengthened stem vowel before an ending: 'beszerzésé' + 're'
+            const short = rest.replace(/á$/, 'a').replace(/é$/, 'e');
+            if (short !== rest && formsOf.has(short)) return short;
+            next.push(rest);
+          }
+      frontier = next;
+    }
+    return null;
+  }
+  // [{re, folded}]: folded says whether the pattern runs on the folded or the lower-cased text
   function matchers() {
-    const q = fold(query).trim();
-    const phrase = q.match(/^["„”'](.+?)["„”']?$/);
-    if (phrase) return [new RegExp(escRe(phrase[1]), 'g')];
-    return q.split(/\s+/).filter(w => w.length >= 3)
-      .map(w => w.length > 5 ? w.slice(0, Math.max(5, w.length - 3)) : w)
-      .map(stem => new RegExp('(?:^|[^a-z0-9])(' + escRe(stem) + '[a-z0-9]*)', 'g'));
+    const raw = String(query ?? '').toLowerCase().trim();
+    const phrase = raw.match(/^["„”'](.+?)["„”']?$/);
+    if (phrase) return [{ re: new RegExp(escRe(fold(phrase[1])), 'g'), folded: true }];
+    ensureLemmas();
+    return raw.split(/\s+/).filter(w => w.length >= 3).map(w => {
+      const lemma = lemmaOf.get(w) || (formsOf.has(w) ? w : knownStem(w)), forms = lemma && formsOf.get(lemma);
+      if (forms) {
+        const alts = [...new Set([...forms, w])].sort((a, b) => b.length - a.length).map(escRe);
+        return { re: new RegExp(`(?:^|[^${LETTER}])(${alts.join('|')})(?![${LETTER}])`, 'g'), folded: false };
+      }
+      if (fold(w) === w)   // typed without accents: word beginnings in the folded text
+        return { re: new RegExp('(?:^|[^a-z0-9])(' + escRe(w) + '[a-z0-9]*)', 'g'), folded: true };
+      return { re: new RegExp(`(?:^|[^${LETTER}])(${escRe(w)}[${LETTER}]*)`, 'g'), folded: false };
+    });
   }
   function hl(text) {
     if (!query) return esc(text);
-    const f = fold(text), marks = [];
-    for (const re of matchers()) {
+    const lower = String(text).toLowerCase(), f = fold(text), marks = [];
+    for (const { re, folded: onFolded } of matchers()) {
+      const target = onFolded ? f : lower;
       re.lastIndex = 0;
-      for (let m; (m = re.exec(f)); ) {
+      for (let m; (m = re.exec(target)); ) {
         const word = m[1] ?? m[0], start = m.index + m[0].length - word.length;
         marks.push([start, start + word.length]);
         if (m[0].length === 0) re.lastIndex++;
@@ -113,7 +164,8 @@ window.SzmszView = (() => {
     if (!res.length) return;
     hitSet = new Set();
     for (let k = 0; k < folded.length; k++)
-      if (res.every(re => { re.lastIndex = 0; return re.test(folded[k]); })) hitSet.add(k);
+      if (res.every(({ re, folded: onFolded }) => { re.lastIndex = 0; return re.test(onFolded ? folded[k] : lowered[k]); }))
+        hitSet.add(k);
   }
   const hitsIn = u => (u.hits ??= u.tasks.filter(t => hitSet.has(t.i)).length + u.children.reduce((s, c) => s + hitsIn(c), 0));
   function clearHitCache() { for (const u of units) delete u.hits; }
