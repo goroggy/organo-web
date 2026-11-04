@@ -228,7 +228,7 @@
       display: block;
       width: 100%;
       height: auto;
-      max-height: calc(100vh - 240px);
+      max-height: none;
       min-height: 470px;
     }
 
@@ -568,6 +568,7 @@
     #flow-map[data-mode="tasks"] .flow-ribbon[data-task="d10"] { stroke: #5d7f9c; }
     .task-label[data-task="d10"] rect { fill: #5d7f9c; }
     #flow-map[data-mode="tasks"] .flow-ribbon[data-task="cont"] { stroke: #b9c3bf; opacity: .35; }
+    #flow-map { background: linear-gradient(to right, transparent calc(100% - 1px), rgba(25, 60, 45, .09) 0) 0 0 / calc(100% / 7) 100% repeat-x; background-origin: content-box; background-clip: content-box; }
     .filter-banner { margin: 0; padding: 10px 28px; background: #fff4d6; border-bottom: 1px solid #e8d49a; }
     .filter-banner a { margin-left: 8px; font-weight: 700; }
     .org-node.muted { opacity: .32; }
