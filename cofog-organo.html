@@ -113,7 +113,7 @@
   <header class="topbar">
     <a class="brand" href="cofog-organo.html"><img src="logo.svg" alt="" width="30" height="30" style="vertical-align:middle;margin-right:10px">ORGANO</a>
     <div class="scope">Feladat és szervezet</div>
-    <div class="scope" id="pubstamp" title="A kiadás időpontja (a kiadó szkript írja be)" style="font-size:.78rem;opacity:.8">Kiadva: 2026-11-02 21:11</div>
+    <div class="scope" id="pubstamp" title="A kiadás időpontja (a kiadó szkript írja be)" style="font-size:.78rem;opacity:.8">Kiadva: 2026-11-04 07:31</div>
     <nav class="topnav">
       <a href="#" id="navHome">Kezdőlap</a>
       <a href="szmsz-transfer-overview.html" id="navChart">Átadások ábrája</a>
@@ -570,7 +570,7 @@
         pageTabs([
           [`Ki felel érte? <small>${n.orgIds.size}</small>`, rows.length
             ? `<h2 class="sec"><span>Szervezetek (${n.orgIds.size})</span><span class="sub-hint">a rendeleti hatáskörök szerint, időben</span></h2>` + orgSection(rows)
-            : `<p class="empty-msg">Ehhez a TEÁOR-ágazathoz a POC 10 minisztériumának hatáskörei között nincs közvetlen hozzárendelés.</p>`],
+            : `<p class="empty-msg">Ehhez a TEÁOR-ágazathoz a ${Object.keys(D.orgs).length} szervezet hatáskörei között nincs közvetlen hozzárendelés.</p>`],
           [`Hatásköri tárgykörök <small>${threadCnt}</small>`, rows.length
             ? `<h2 class="sec"><span>Rendeleti hatásköri tárgykörök (${threadCnt}${rawScopeCnt > threadCnt ? `, ${rawScopeCnt} szövegváltozatból összefűzve` : ''})</span></h2>` + threadSection(rows)
             : '<p class="empty-msg">Nincs hozzárendelt hatásköri tárgykör.</p>'],
@@ -621,6 +621,10 @@
       szmsz: 'A bal oldali fa a minisztériumok SZMSZ-ei, azokon belül az egységek. Fent a kereső a feladatok szövegében is keres.',
     };
     const multiCnt = (D.threads || []).filter(t => t.variants && t.variants.length > 1).length;
+    // organisation count, and the bodies that run on two identifiers (a ministry that ceased and its successor of the same name)
+    const orgNames = Object.values(D.orgs).map(n => n.replace(/\s*\(megszűnt \d+\)$/, ''));
+    const doubled = [...new Set(orgNames.filter((n, i) => orgNames.indexOf(n) !== i))];
+    const orgSummary = `${orgNames.length} szervezet` + (doubled.length ? ` (${doubled.join(', ')} két azonosítón)` : '');
     // the start page of every tab: what the viewer can show, one tile each; the numbers behind a <details>
     window.organoStartPage = m => `<div class="start"><h1>Feladat és szervezet</h1>` +
       `<p class="lead">Mely minisztérium milyen feladatot lát el, és hogyan vándoroltak a feladatok 2010 és 2026 között. ${HINT[m]}</p>` +
@@ -632,9 +636,14 @@
       `<a class="tile" href="#" data-start="nace"><b>Szakágazat szerint (TEÁOR)</b><span>Ugyanez a gazdasági ágazatok rendjéből nézve.</span></a>` +
       `<a class="tile" href="public-health-overview.html"><b>Példa: népegészségügy →</b><span>Egy kidolgozott történet: a népegészségügyi intézmények szétválásai és egyesülései 2004–2026.</span></a>` +
       `</div>` +
-      `<details class="more"><summary>Az adatokról</summary>${Object.keys(D.orgs).length} szervezet (10 minisztérium, a Pénzügyminisztérium két azonosítón); ` +
+      `<details class="more"><summary>Az adatokról</summary>${orgSummary};` +
       `${(D.threads || []).length} rendeleti hatásköri tárgykör (${multiCnt} több szövegváltozatból összefűzve); a feladatok a minisztériumok kiadáskori SZMSZ-eiből. ` +
-      `Hatásköri adatok: ${esc(D.generated)}. Prototípus: a számok és a besorolások ellenőrzött mintákon mértek, nem jogi megállapítások.</details>` +
+      `Hatásköri adatok: ${esc(D.generated)}. Prototípus: a számok és a besorolások ellenőrzött mintákon mértek, nem jogi megállapítások.<br>` +
+      `<b>Mért pontosság (2026-11-04, minden minisztérium mai SZMSZ-én, független olvasók, szervezetenként 30 elemű minta):</b> ` +
+      `a forrás feladatsorainak kb. 97,7%-a megvan a helyes egység alatt, a mintavett feladatok és egységek kb. 93,3%-a valódi feladat vagy egység (±2 pont). ` +
+      `<b>Ismert hiányok:</b> a BM, EüM és SZCSM egységfája lapos; egyes feladatok bevezető tagmondat nélküli töredékként jelennek meg; ` +
+      `a régebbi SZMSZ-ekben szellem-duplikátumok és hiányzó osztályszintű feladatok vannak; a GEM, KBM és TKKM ideiglenes szervezeti rendje csak egységekkel szerepel, feladat nélkül; ` +
+      `egyes kódbesorolások azonos nevű egységeknél eltérnek.</details>` +
       `<details class="more"><summary>Mit jelentenek a szavak?</summary><b>Feladatfonal</b>: ugyanaz a feladat az egymást követő SZMSZ-ekben és minisztériumokban végigkövetve. ` +
       `<b>Átadás</b>: egy feladat szövege kikerül egy minisztérium SZMSZ-éből, és legfeljebb 400 nap múlva egy másikéban megjelenik; a dátum az SZMSZ-ek kiadásából következik (az SZMSZ-módosítások nincsenek alkalmazva), a tényleges jogi átadás napját külön forrás igazolja. ` +
       `<b>COFOG-kód</b>: a kormányzati funkció 6 jegyű kódja (15/2019. (XII. 7.) PM rendelet).</details></div>`;

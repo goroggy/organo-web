@@ -6,7 +6,7 @@ window.SzmszView = (() => {
   const fold = s => String(s ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
   const MIN_QUERY = 3, MAX_GROUPS = 250, MAX_THREADS = 200;
   const LABEL = /^\s*(?:\(?\d{1,3}(?:\.\d{1,3})*[a-z]?[.)]|\(?[a-z]{1,3}\)|[-–•])\s+/;
-  const STATUS = ['egyetértés', 'egyetértés (definíciókkal)', 'vitatott', 'egy szavazat'];
+  const STATUS = ['egyetértés', 'egyetértés (definíciókkal)', 'vitatott', 'egy szavazat', 'döntés'];
   // scripts/szmsz_poc_build.py MECHANISMS, in that order
   const MECH = [['kiválás', 'az átvevő első SZMSZ-e, az átadó működik tovább'], ['portfólió-áthelyezés', 'mindkét szervezet működik tovább'],
     ['beolvadás', 'az átadó megszűnik, az átvevő már működött'], ['megszűnés új szervbe', 'az átadó megszűnik, az átvevő új'],
@@ -18,7 +18,7 @@ window.SzmszView = (() => {
     D = window.SZMSZ_POC;
     docs = D.docs.map(([org, title, from, until, njt, issuer], i) =>
       ({ id: 'd' + i, i, org, title, from, until, njt, issuer, units: [], roots: [], taskCount: 0 }));
-    units = D.units.map(([doc, number, name, parent], i) => ({ id: 'u' + i, i, doc, number, name, parent, children: [], tasks: [] }));
+    units = D.units.map(([doc, number, name, parent, group], i) => ({ id: 'u' + i, i, doc, number, name, parent, group: !!group, children: [], tasks: [] }));
     tasks = [];
     for (let k = 0; k < D.tasks.length; k += 3) tasks.push({ i: k / 3, unit: D.tasks[k], text: D.str[D.tasks[k + 1]], ctx: D.tasks[k + 2] < 0 ? null : D.str[D.tasks[k + 2]] });
     for (const u of units) {
@@ -288,18 +288,19 @@ window.SzmszView = (() => {
     const ds = docsOf(org);
     const { axis, seg } = timeline(ds.map(d => ({ org, from: d.from, until: d.until })));
     $('right').innerHTML = `<div class="crumbs">Szervezet</div><h1>${esc(orgName(org))}</h1>` +
+      (D.onotes && D.onotes[org] ? `<div class="note"><b>Figyelem:</b> ${esc(D.onotes[org])}</div>` : '') +
       `<div class="crumbs">${ds.length} SZMSZ a HLex-ben · ${ds.reduce((s, d) => s + d.taskCount, 0)} feladat-előfordulás · az utolsó SZMSZ hatálya „máig”, amíg a HLex nem ismer újabbat</div>` + identityNotes(ds) +
       `${axis}<div class="org"><div class="osum"><div class="name">SZMSZ-ek</div><div class="bar">${ds.map((d, k) => seg({ from: d.from, until: d.until, label: `${d.title} · ${period(d)}` }, k)).join('')}</div></div></div>` +
       `<table class="det"><tr><th>SZMSZ</th><th>SZMSZ-időszak</th><th>Kibocsátó</th><th>Egység</th><th>Feladat</th></tr>` +
-      ds.map(d => `<tr><td><a href="#" data-szmsz="${d.id}">${esc(d.title)}</a></td><td style="white-space:nowrap">${esc(period(d))}</td><td>${esc(d.issuer)}</td><td>${d.units.length}</td><td>${d.taskCount}</td></tr>`).join('') + '</table>';
+      ds.map(d => `<tr><td><a href="#" data-szmsz="${d.id}">${esc(d.title)}</a></td><td style="white-space:nowrap">${esc(period(d))}</td><td>${esc(d.issuer)}</td><td>${d.units.filter(u => !u.group).length}</td><td>${d.taskCount}</td></tr>`).join('') + '</table>';
   }
   function showDoc(d) {
     $('right').innerHTML = `<div class="crumbs">${esc(orgName(d.org))}</div><h1>${esc(d.title)}</h1>` +
       `<div class="crumbs">SZMSZ-időszak (a kiadáskori szöveg, módosítások nélkül): ${esc(period(d))} · kibocsátó: ${esc(d.issuer)} · HLex: ${esc(d.njt)}</div>` +
       identityNotes([d]) +
-      `<h2 class="sec"><span>Szervezeti egységek (${d.units.length}) és feladataik (${d.taskCount})</span></h2>` +
+      `<h2 class="sec"><span>Szervezeti egységek (${d.units.filter(u => !u.group).length}) és feladataik (${d.taskCount})</span></h2>` +
       `<table class="det"><tr><th>Szám</th><th>Egység</th><th>Feladat (alatta lévőkkel)</th></tr>` +
-      d.units.map(u => `<tr><td>${esc(u.number)}</td><td style="padding-left:${14 + 14 * (unitPath(u).length - 1)}px"><a href="#" data-szmsz="${u.id}">${esc(u.name)}</a></td><td>${u.total}</td></tr>`).join('') + '</table>';
+      d.units.map(u => `<tr><td>${esc(u.number)}</td><td style="padding-left:${14 + 14 * (unitPath(u).length - 1)}px"><a href="#" data-szmsz="${u.id}">${u.group ? '<i title="Csoportcím: a felsorolt egységek fölötti címsor, nem önálló egység">' + esc(u.name) + '</i>' : esc(u.name)}</a></td><td>${u.total}</td></tr>`).join('') + '</table>';
   }
   function showUnit(u) {
     const d = docs[u.doc], path = unitPath(u);
